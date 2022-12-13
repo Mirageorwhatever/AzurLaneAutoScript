@@ -1,7 +1,7 @@
 from module.campaign.campaign_base import CampaignBase
-from module.map.map_base import CampaignMap
-from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
+from module.map.map_base import CampaignMap
+from module.map.map_grids import RoadGrids, SelectedGrids
 
 MAP = CampaignMap()
 MAP.shape = 'H6'
@@ -71,7 +71,7 @@ class Campaign(CampaignBase):
     def battle_5(self):
         self.clear_all_mystery()
 
-        if not self.config.FLEET_2:
+        if self.config.FLEET_BOSS == 1:
             self.pick_up_ammo()
 
         boss = self.map.select(is_boss=True)

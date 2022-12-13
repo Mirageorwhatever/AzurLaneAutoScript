@@ -1,6 +1,7 @@
 from module.campaign.campaign_base import CampaignBase
 from module.map.map_base import CampaignMap
-from module.map.map_grids import SelectedGrids, RoadGrids
+from module.map.map_grids import RoadGrids, SelectedGrids
+
 from .campaign_13_1 import Config as ConfigBase
 
 MAP = CampaignMap('13-4')
@@ -74,7 +75,7 @@ class Campaign(CampaignBase):
     MAP = MAP
 
     def battle_0(self):
-        if self.clear_filter_enemy('2L > 2M > 3L > 2E > 3E > 2C > 3C > 3M', preserve=0):
+        if self.clear_filter_enemy('1L > 1M > 2L > 2M > 3L > 2E > 3E > 2C > 3C > 3M', preserve=0):
             return True
 
         return self.battle_default()
@@ -82,7 +83,7 @@ class Campaign(CampaignBase):
     def battle_3(self):
         self.pick_up_ammo()
 
-        if self.clear_filter_enemy('2L > 2M > 3L > 2E > 3E > 2C > 3C > 3M', preserve=0):
+        if self.clear_filter_enemy('1L > 1M > 2L > 2M > 3L > 2E > 3E > 2C > 3C > 3M', preserve=0):
             return True
 
         return self.battle_default()

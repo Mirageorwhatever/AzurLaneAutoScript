@@ -4,6 +4,7 @@ from module.logger import logger
 
 class Config:
     HOMO_EDGE_COLOR_RANGE = (0, 12)
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 210
     MAP_SWIPE_MULTIPLY = 1.537
     MAP_SWIPE_MULTIPLY_MINITOUCH = 1.486
 
@@ -14,7 +15,7 @@ class Config:
 
 
 class CampaignBase(CampaignBase_):
-    ENEMY_FILTER = '3T > 3L > 3E > 3M > 2T > 2L > 2E > 2M > 1T > 1L > 1E > 1M'
+    ENEMY_FILTER = '1T > 1L > 1E > 1M > 2T > 2L > 2E > 2M > 3T > 3L > 3E > 3M'
     picked_light_house = []
     picked_flare = []
 

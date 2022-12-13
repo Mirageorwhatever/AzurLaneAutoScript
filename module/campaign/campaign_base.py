@@ -1,7 +1,7 @@
 from module.base.decorator import Config, cached_property
 from module.campaign.campaign_ui import CampaignUI
 from module.combat.auto_search_combat import AutoSearchCombat
-from module.exception import CampaignEnd, ScriptError, MapEnemyMoved
+from module.exception import CampaignEnd, MapEnemyMoved, ScriptError
 from module.logger import logger
 from module.map.map import Map
 from module.map.map_base import CampaignMap
@@ -120,8 +120,7 @@ class CampaignBase(CampaignUI, Map, AutoSearchCombat):
         logger.hr(self.ENTRANCE, level=2)
 
         # Enter map
-        if self.config.Emotion_CalculateEmotion:
-            self.emotion.check_reduce(self._map_battle)
+        self.emotion.check_reduce(self._map_battle)
         self.ENTRANCE.area = self.ENTRANCE.button
         self.enter_map(self.ENTRANCE, mode=self.config.Campaign_Mode)
 

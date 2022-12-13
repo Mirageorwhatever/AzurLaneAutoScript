@@ -1,6 +1,7 @@
-from module.webui.utils import Icon, WebIOTaskHandler, set_localstorage
 from pywebio.output import clear, put_html, put_scope, put_text, use_scope
 from pywebio.session import defer_call, info, run_js
+
+from module.webui.utils import Icon, WebIOTaskHandler, set_localstorage
 
 
 class Base:
@@ -113,6 +114,7 @@ class Frame(Base):
     def pin_set_invalid_mark(keys) -> None:
         if isinstance(keys, str):
             keys = [keys]
+        keys = ["_".join(key.split(".")) for key in keys]
         js = "".join(
             [
                 f"""$(".form-control[name='{key}']").addClass('is-invalid');"""
@@ -128,6 +130,7 @@ class Frame(Base):
     def pin_remove_invalid_mark(keys) -> None:
         if isinstance(keys, str):
             keys = [keys]
+        keys = ["_".join(key.split(".")) for key in keys]
         js = "".join(
             [
                 f"""$(".form-control[name='{key}']").removeClass('is-invalid');"""

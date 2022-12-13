@@ -40,6 +40,8 @@ MenuDevelop:
   HomePage:
   Translate:
   Update:
+  Remote:
+  Utils:
 
 Overview:
   Scheduler:
@@ -55,11 +57,11 @@ AddAlas:
   CopyFrom:
   Confirm:
   FileExist:
+  InvalidChar:
 
 Update:
   UpToDate:
   HaveUpdate:
-  UpdateFailed:
   UpdateStart:
   UpdateWait:
   UpdateRun:
@@ -74,6 +76,16 @@ Update:
   Time:
   Message:
   DisabledWarn:
+  DetailedHistory:
+
+Remote:
+  Running:
+  NotRunning:
+  NotEnable:
+  EntryPoint:
+  ConfigureHint:
+  SSHNotInstall:
 
 Text:
   InvalidFeedBack:
+  Clear:

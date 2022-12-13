@@ -1,5 +1,5 @@
 from module.base.timer import Timer
-from module.base.utils import area_in_area
+from module.base.utils import area_cross_area
 from module.combat.assets import GET_ITEMS_1
 from module.handler.assets import *
 from module.handler.enemy_searching import EnemySearchingHandler
@@ -18,7 +18,7 @@ class MysteryHandler(StrategyHandler, EnemySearchingHandler):
                 Can be destination grid which makes the bot more like human.
         """
         with self.stat.new(
-                genre=self.config.campaign_name, save=self.config.DropRecord_SaveCombat, upload=False
+                genre=self.config.campaign_name, method=self.config.DropRecord_CombatRecord
         ) as drop:
             if self.handle_mystery_items(button=button, drop=drop):
                 return 'get_item'
@@ -39,7 +39,9 @@ class MysteryHandler(StrategyHandler, EnemySearchingHandler):
         Returns:
             bool: If handled.
         """
-        if button is None or area_in_area(button.button, MYSTERY_ITEM.area, threshold=20):
+        if not self.config.MAP_MYSTERY_MAP_CLICK:
+            button = MYSTERY_ITEM
+        if button is None or area_cross_area(button.button, MYSTERY_ITEM.area, threshold=5):
             button = MYSTERY_ITEM
 
         if self.appear(GET_ITEMS_1):

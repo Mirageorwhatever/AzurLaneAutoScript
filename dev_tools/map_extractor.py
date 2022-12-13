@@ -2,10 +2,10 @@ import os
 import re
 
 from dev_tools.slpp import slpp
-from module.base.utils import location2node
-from module.map.utils import *
 from dev_tools.utils import LuaLoader
+from module.base.utils import location2node
 from module.logger import logger
+from module.map.utils import *
 
 """
 This an auto-tool to extract map files used in Alas.
@@ -144,6 +144,63 @@ DIC_SIREN_NAME_CHI_TO_ENG = {
     'lingmin': 'Soobrazitelny',
     'jifu': 'Kiev',
     'fuerjia': 'Volga',
+
+    # Aurora Noctis
+    'U81': 'U81',
+    'U101': 'U101',
+    'U522': 'U522',
+    'deyizhi': 'Deutschland',
+    'tierbici': 'Tirpitz',
+    'genaisennao': 'Gneisenau',
+    'shaenhuosite': 'Scharnhorst',
+    'sipeibojue': 'Spee',
+    'U73': 'U73',
+
+    # Rondo at Rainbow's End
+    'z2': 'Z2',
+    'laibixi': 'Leipzig',
+    'ougen': 'PrinzEugen',
+    'sairenqianting_ii': 'SS',
+    'sairenboss11': 'Compiler',
+
+    # Pledge of the Radiant Court
+    'sizhannvshen': 'Bellona',
+    'fuchou': 'Revenge',
+
+    # Aquilifer's Ballade
+    'tianhou_ghost': 'Juno_ghost',
+    'haiwangxing_ghost': 'Neptune_ghost',
+    'lemaer_ghost': 'LeMars_ghost',
+    'jingjishen_ghost': 'Hermes_ghost',
+    'qiubite_ghost': 'Jupiter_ghost',
+
+    # Aquilifer's Ballade
+    'z46': 'Z46',
+    'haiyinlixi': 'PrinzHeinrich',
+    'qibolin': 'GrafZeppelin',
+    'magedebao': 'Magdeburg',
+    'adaerbote': 'PrinzAdalbert',
+    'weixi': 'Weser',
+    'wuerlixi': 'UlrichVonHutten',
+
+    # Violet Tempest Blooming Lycoris
+    'ruoyue': 'Wakaba',
+    'liangyue': 'Suzutsuki',
+    'shenxue': 'Miyuki',
+    'qifeng': 'Hatakaze',
+    'yuhei': 'Haguro',
+    'birui': 'Hiei',
+    'zhenming': 'Haruna',
+    'chicheng': 'Akagi',
+    'jiahe': 'Kaga',
+    'sanli': 'Mikasa',
+    'changmen': 'Nagato',
+    'jiuyun': 'Sakawa',
+    'qiansui': 'Chitose',
+    'qiandaitian': 'Chiyoda',
+    'longfeng': 'Ryuuhou',
+    'chunyue': 'Harutsuki',
+    'jiangfeng': 'Kawakaze',
 }
 
 
@@ -217,7 +274,11 @@ class MapData:
             # config
             self.MAP_SIREN_TEMPLATE = []
             self.MOVABLE_ENEMY_TURN = set()
-            for siren_id in data['ai_expedition_list'].values():
+            # Aquilifers Ballade (event_20220728_cn) has different sirens in clear mode
+            sirens = list(data['ai_expedition_list'].values())
+            if data_loop is not None and data_loop['ai_expedition_list'] is not None:
+                sirens += list(data_loop['ai_expedition_list'].values())
+            for siren_id in sirens:
                 if siren_id == 1:
                     continue
                 exped_data = EXPECTATION_DATA.get(siren_id, {})
@@ -568,8 +629,8 @@ IS_WAR_ARCHIVES = False
 ENEMY_FILTER = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
 
 LOADER = LuaLoader(FILE, server='CN')
-DATA = LOADER.load('./sharecfg/chapter_template.lua')
-DATA_LOOP = LOADER.load('./sharecfg/chapter_template_loop.lua')
+DATA = LOADER.load('./sharecfgdata/chapter_template.lua')
+DATA_LOOP = LOADER.load('./sharecfgdata/chapter_template_loop.lua')
 MAP_EVENT_LIST = LOADER.load('./sharecfg/map_event_list.lua')
 MAP_EVENT_TEMPLATE = LOADER.load('./sharecfg/map_event_template.lua')
 EXPECTATION_DATA = LOADER.load('./sharecfgdata/expedition_data_template.lua')

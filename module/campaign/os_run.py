@@ -22,54 +22,96 @@ class OSCampaignRun(OSMapOperation):
         return True
 
     def opsi_explore(self):
-        self.load_campaign()
         try:
+            self.load_campaign()
             self.campaign.os_explore()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
 
     def opsi_shop(self):
-        self.load_campaign()
         try:
+            self.load_campaign()
             self.campaign.os_shop()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
 
-    def opsi_daily(self):
-        self.load_campaign()
+    def opsi_voucher(self):
         try:
+            self.load_campaign()
+            self.campaign.os_voucher()
+        except ActionPointLimit:
+            self.config.opsi_task_delay(ap_limit=True)
+
+    def opsi_daily(self):
+        try:
+            self.load_campaign()
             self.campaign.os_daily()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
 
     def opsi_meowfficer_farming(self):
-        self.load_campaign()
         try:
+            self.load_campaign()
             self.campaign.os_meowfficer_farming()
         except ActionPointLimit:
             if get_os_reset_remain() > 0:
-                self.campaign.config.task_delay(server_update=True)
+                self.config.task_delay(server_update=True)
+                self.config.task_call('Reward')
             else:
                 logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
                 self.config.task_delay(minute=150, server_update=True)
 
-    def opsi_obscure(self):
+    def opsi_hazard1_leveling(self):
+        self.config.override(
+            OpsiGeneral_AkashiShopFilter='ActionPoint'
+        )
+        self.config.cross_set(keys='OpsiMeowfficerFarming.Scheduler.Enable', value=True)
+        if self.config.cross_get(
+                keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve',
+                default=0
+        ) < 1000:
+            self.config.cross_set(
+                keys='OpsiMeowfficerFarming.OpsiMeowfficerFarming.ActionPointPreserve',
+                value=1000
+            )
+
         self.load_campaign()
         try:
+            self.campaign.os_hazard1_leveling()
+        except ActionPointLimit:
+            self.config.task_delay(server_update=True)
+
+    def opsi_obscure(self):
+        try:
+            self.load_campaign()
             self.campaign.os_obscure()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
 
     def opsi_abyssal(self):
-        self.load_campaign()
         try:
+            self.load_campaign()
             self.campaign.os_abyssal()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
 
-    def opsi_stronghold(self):
-        self.load_campaign()
+    def opsi_archive(self):
         try:
+            self.load_campaign()
+            self.campaign.os_archive()
+        except ActionPointLimit:
+            self.config.opsi_task_delay(ap_limit=True)
+
+    def opsi_stronghold(self):
+        try:
+            self.load_campaign()
             self.campaign.os_stronghold()
         except ActionPointLimit:
             self.config.opsi_task_delay(ap_limit=True)
+
+    def opsi_cross_month(self):
+        try:
+            self.load_campaign()
+            self.campaign.os_cross_month()
+        except ActionPointLimit:
+            self.campaign.os_cross_month_end()

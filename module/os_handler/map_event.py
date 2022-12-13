@@ -178,26 +178,38 @@ class MapEventHandler(EnemySearchingHandler):
         Args:
             drop (DropImage):
             skip_first_screenshot (bool):
+
+        Returns:
+            bool: True if current map cleared
         """
-        confirm_timer = Timer(1, count=2).start()
+        confirm_timer = Timer(1.2, count=3).start()
+        cleared = False
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 self.device.screenshot()
 
-            if self.appear(AUTO_SEARCH_REWARD, offset=(20, 20), interval=2):
+            if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50), interval=2):
+                if self.ensure_no_info_bar():
+                    cleared = True
                 if drop:
                     drop.handle_add(main=self, before=4)
                 self.device.click(AUTO_SEARCH_REWARD)
-                self.interval_reset(AUTO_SEARCH_REWARD)
+                self.clicked = True
+                self.interval_reset([
+                    AUTO_SEARCH_REWARD,
+                    AUTO_SEARCH_OS_MAP_OPTION_ON,
+                    AUTO_SEARCH_OS_MAP_OPTION_OFF,
+                ])
                 confirm_timer.reset()
                 continue
             if self.handle_map_event():
                 confirm_timer.reset()
                 continue
             if self.appear_then_click(GLOBE_GOTO_MAP, offset=(20, 20), interval=2):
-                # Sometimes entered globe map after clicking AUTO_SEARCH_REWARD, but don't know why
+                # Sometimes entered globe map after clicking AUTO_SEARCH_REWARD
+                # because of duplicated clicks and clicks to places outside the map
                 confirm_timer.reset()
                 continue
 
@@ -208,11 +220,14 @@ class MapEventHandler(EnemySearchingHandler):
             else:
                 confirm_timer.reset()
 
-    def handle_os_auto_search_map_option(self, drop=None, enable=True):
+        return cleared
+
+    def handle_os_auto_search_map_option(self, drop=None, enable=True, quit=True):
         """
         Args:
-            drop (DropImage)
+            drop (DropImage):
             enable (bool):
+            quit (bool):
 
         Returns:
             bool: If clicked.
@@ -221,12 +236,18 @@ class MapEventHandler(EnemySearchingHandler):
                 and AUTO_SEARCH_OS_MAP_OPTION_OFF.match_appear_on(self.device.image) \
                 and self.info_bar_count() >= 2:
             self.device.screenshot_interval_set()
+            self.os_auto_search_quit(drop=drop)
             raise CampaignEnd
         if self.appear(AUTO_SEARCH_REWARD, offset=(50, 50)):
             self.device.screenshot_interval_set()
-            self.os_auto_search_quit(drop=drop)
-            raise CampaignEnd
-        if enable:
+            if quit and self.os_auto_search_quit(drop=drop):
+                # No more items on current map
+                raise CampaignEnd
+            else:
+                # Auto search stopped but map hasn't been cleared
+                return True
+
+        elif enable:
             if self.appear(AUTO_SEARCH_OS_MAP_OPTION_OFF, offset=(5, 120), interval=3) \
                     and AUTO_SEARCH_OS_MAP_OPTION_OFF.match_appear_on(self.device.image):
                 self.device.click(AUTO_SEARCH_OS_MAP_OPTION_OFF)

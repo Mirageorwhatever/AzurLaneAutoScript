@@ -1,10 +1,11 @@
 import random
 import re
 import socket
+import time
 
 import uiautomator2 as u2
+from adbutils import AdbTimeout, _AdbStreamConnection
 from lxml import etree
-from adbutils import _AdbStreamConnection, AdbTimeout
 
 from module.base.decorator import cached_property
 from module.logger import logger
@@ -19,9 +20,11 @@ def is_port_using(port_num):
     s.settimeout(2)
 
     try:
-        result = s.connect_ex(('127.0.0.1', port_num))
-        # if port is using, return code should be 0. (can be connected)
-        return result == 0
+        s.bind(('127.0.0.1', port_num))
+        return False
+    except OSError:
+        # Address already bind
+        return True
     finally:
         s.close()
 
@@ -35,11 +38,12 @@ def random_port(port_range):
         return new_port
 
 
-def recv_all(stream, chunk_size=4096) -> bytes:
+def recv_all(stream, chunk_size=4096, recv_interval=0.000) -> bytes:
     """
     Args:
         stream:
         chunk_size:
+        recv_interval (float): Default to 0.000, use 0.001 if receiving as server
 
     Returns:
         bytes:
@@ -49,6 +53,7 @@ def recv_all(stream, chunk_size=4096) -> bytes:
     """
     if isinstance(stream, _AdbStreamConnection):
         stream = stream.conn
+        stream.settimeout(10)
 
     try:
         fragments = []
@@ -56,9 +61,11 @@ def recv_all(stream, chunk_size=4096) -> bytes:
             chunk = stream.recv(chunk_size)
             if chunk:
                 fragments.append(chunk)
+                # See https://stackoverflow.com/questions/23837827/python-server-program-has-high-cpu-usage/41749820#41749820
+                time.sleep(recv_interval)
             else:
                 break
-        return b''.join(fragments)
+        return remove_shell_warning(b''.join(fragments))
     except socket.timeout:
         raise AdbTimeout('adb read timeout')
 
@@ -73,6 +80,10 @@ def possible_reasons(*args):
     for index, reason in enumerate(args):
         index += 1
         logger.critical(f'Possible reason #{index}: {reason}')
+
+
+class PackageNotInstalled(Exception):
+    pass
 
 
 def handle_adb_error(e):
@@ -110,8 +121,13 @@ def handle_adb_error(e):
         # the device is still available, but it needs to be disconnected and re-connected.
         logger.error(e)
         return True
+    elif 'unknown host service' in text:
+        # AdbError(unknown host service)
+        # Another version of ADB service started, current ADB service has been killed.
+        # Usually because user opened a Chinese emulator, which uses ADB from the Stone Age.
+        logger.error(e)
+        return True
     else:
-        # AdbError(device offline)
         # AdbError()
         logger.exception(e)
         possible_reasons(
@@ -122,16 +138,72 @@ def handle_adb_error(e):
         return False
 
 
-def del_cached_property(obj, name):
+def get_serial_pair(serial):
     """
-    Delete a cached property safely.
+    Args:
+        serial (str):
+
+    Returns:
+        str, str: `127.0.0.1:5555+{X}` and `emulator-5554+{X}`, 0 <= X <= 32
+    """
+    if serial.startswith('127.0.0.1:'):
+        try:
+            port = int(serial[10:])
+            if 5555 <= port <= 5555 + 32:
+                return f'127.0.0.1:{port}', f'emulator-{port - 1}'
+        except (ValueError, IndexError):
+            pass
+    if serial.startswith('emulator-'):
+        try:
+            port = int(serial[9:])
+            if 5554 <= port <= 5554 + 32:
+                return f'127.0.0.1:{port + 1}', f'emulator-{port}'
+        except (ValueError, IndexError):
+            pass
+
+    return None, None
+
+
+def remove_prefix(s, prefix):
+    """
+    Remove prefix of a string or bytes like `string.removeprefix(prefix)`, which is on Python3.9+
 
     Args:
-        obj:
-        name (str):
+        s (str, bytes):
+        prefix (str, bytes):
+
+    Returns:
+        str, bytes:
     """
-    if name in obj.__dict__:
-        del obj.__dict__[name]
+    return s[len(prefix):] if s.startswith(prefix) else s
+
+
+def remove_shell_warning(s):
+    """
+    Remove warnings from shell
+
+    Args:
+        s (str, bytes):
+
+    Returns:
+        str, bytes:
+    """
+    # WARNING: linker: [vdso]: unused DT entry: type 0x70000001 arg 0x0\n\x89PNG\r\n\x1a\n\x00\x00\x00\rIH
+    if isinstance(s, bytes):
+        if s.startswith(b'WARNING'):
+            try:
+                s = s.split(b'\n', maxsplit=1)[1]
+            except IndexError:
+                pass
+        return s
+        # return re.sub(b'^WARNING.+\n', b'', s)
+    elif isinstance(s, str):
+        if s.startswith('WARNING'):
+            try:
+                s = s.split('\n', maxsplit=1)[1]
+            except IndexError:
+                pass
+    return s
 
 
 class IniterNoMinicap(u2.init.Initer):
@@ -193,3 +265,10 @@ class HierarchyButton:
 
     def __str__(self):
         return self.name
+
+    @cached_property
+    def focused(self):
+        if self.exist:
+            return self.nodes[0].attrib.get("focused").lower() == 'true'
+        else:
+            return False

@@ -5,8 +5,10 @@ from module.ui.assets import WAR_ARCHIVES_CHECK
 from module.ui.page import page_archives
 from module.ui.scroll import Scroll
 from module.ui.switch import Switch
-from module.war_archives.assets import WAR_ARCHIVES_EX_ON, WAR_ARCHIVES_SP_ON, \
-    WAR_ARCHIVES_CAMPAIGN_CHECK, WAR_ARCHIVES_SCROLL
+from module.war_archives.assets import (WAR_ARCHIVES_CAMPAIGN_CHECK,
+                                        WAR_ARCHIVES_EX_ON,
+                                        WAR_ARCHIVES_SCROLL,
+                                        WAR_ARCHIVES_SP_ON)
 from module.war_archives.dictionary import dic_archives_template
 
 WAR_ARCHIVES_SWITCH = Switch('War_Archives_switch', is_selector=True)
@@ -18,6 +20,7 @@ WAR_ARCHIVES_SCROLL = Scroll(WAR_ARCHIVES_SCROLL, color=(247, 211, 66), name='WA
 class CampaignBase(CampaignBase_):
     # Helper variable to keep track of whether is the first runthrough
     first_run = True
+    ENEMY_FILTER = '1T > 1L > 1E > 1M > 2T > 2L > 2E > 2M > 3T > 3L > 3E > 3M'
 
     def _get_archives_entrance(self, name):
         """

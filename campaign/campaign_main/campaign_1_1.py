@@ -1,7 +1,7 @@
 from module.campaign.campaign_base import CampaignBase
-from module.map.map_base import CampaignMap
-from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
+from module.map.map_base import CampaignMap
+from module.map.map_grids import RoadGrids, SelectedGrids
 
 MAP = CampaignMap()
 MAP.shape = 'G1'
@@ -36,6 +36,7 @@ class Config:
     HOMO_EDGE_COLOR_RANGE = (0, 49)
     INTERNAL_LINES_HOUGHLINES_THRESHOLD = 40
     EDGE_LINES_HOUGHLINES_THRESHOLD = 40
+    HOMO_EDGE_HOUGHLINES_THRESHOLD = 80
 
 
 class Campaign(CampaignBase):

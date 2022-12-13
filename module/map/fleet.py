@@ -3,12 +3,11 @@ import itertools
 import numpy as np
 
 from module.base.timer import Timer
-from module.exception import MapWalkError, MapEnemyMoved, MapDetectionError
+from module.exception import MapDetectionError, MapEnemyMoved, MapWalkError
 from module.handler.ambush import AmbushHandler
 from module.logger import logger
 from module.map.camera import Camera
-from module.map.map_base import SelectedGrids
-from module.map.map_base import location2node, location_ensure
+from module.map.map_base import SelectedGrids, location2node, location_ensure
 from module.map.utils import match_movable
 
 
@@ -25,7 +24,7 @@ class Fleet(Camera, AmbushHandler):
     @property
     def fleet_1(self):
         if self.fleet_current_index != 1:
-            self.fleet_switch_to(index=1)
+            self.fleet_ensure(index=1)
         return self
 
     @fleet_1.setter
@@ -36,7 +35,7 @@ class Fleet(Camera, AmbushHandler):
     def fleet_2(self):
         if self.config.FLEET_2 and self.config.FLEET_BOSS == 2:
             if self.fleet_current_index != 2:
-                self.fleet_switch_to(index=2)
+                self.fleet_ensure(index=2)
         return self
 
     @fleet_2.setter
@@ -84,20 +83,29 @@ class Fleet(Camera, AmbushHandler):
         if not self.config.MAP_HAS_FLEET_STEP:
             return 0
         if self.fleet_current_index == 2:
-            return self.config.Fleet_Fleet2Step
+            if self.fleets_reversed:
+                return self.config.Fleet_Fleet1Step
+            else:
+                return self.config.Fleet_Fleet2Step
         else:
-            return self.config.Fleet_Fleet1Step
+            if self.fleets_reversed:
+                return self.config.Fleet_Fleet2Step
+            else:
+                return self.config.Fleet_Fleet1Step
 
-    def fleet_switch_to(self, index):
-        self.fleet_set(index=index)
-        self.camera = self.fleet_current
-        self.update()
-        self.find_path_initial()
-        self.map.show_cost()
-        self.show_fleet()
-        self.hp_get()
-        self.lv_get()
-        self.handle_strategy(index=self.fleet_current_index)
+    def fleet_ensure(self, index):
+        if self.fleet_set(index=index):
+            self.camera = self.fleet_current
+            self.update()
+            self.find_path_initial()
+            self.map.show_cost()
+            self.show_fleet()
+            self.hp_get()
+            self.lv_get()
+            self.handle_strategy(index=self.fleet_current_index)
+            return True
+        else:
+            return False
 
     def switch_to(self):
         pass
@@ -265,6 +273,7 @@ class Fleet(Camera, AmbushHandler):
         may_submarine_icon = may_submarine_icon and self.fleet_submarine_location == may_submarine_icon[0].location
 
         while 1:
+            self.fleet_ensure(self.fleet_current_index)
             self.in_sight(location, sight=self._walk_sight)
             self.focus_to_grid_center()
             grid = self.convert_global_to_local(location)
@@ -278,14 +287,14 @@ class Fleet(Camera, AmbushHandler):
             arrived = False
             # Wait to confirm fleet arrived. It does't appear immediately if fleet in combat.
             extra = 0
-            if self.config.Submarine_Mode == 'hunt_only':
+            if self.config.Submarine_Mode in ['hunt_only', 'hunt_and_boss']:
                 extra += 4.5
             if self.config.MAP_HAS_LAND_BASED and grid.is_mechanism_trigger:
                 extra += grid.mechanism_wait
             arrive_timer = Timer(0.5 + self.round_wait + extra, count=2)
             arrive_unexpected_timer = Timer(1.5 + self.round_wait + extra, count=6)
             # Wait after ambushed.
-            ambushed_retry = Timer(0.5)
+            ambushed_retry = Timer(0.5 + self.round_wait + extra, count=2)
             # If nothing happens, click again.
             walk_timeout = Timer(20)
             walk_timeout.start()
@@ -294,7 +303,7 @@ class Fleet(Camera, AmbushHandler):
                 self.device.screenshot()
                 self.view.update(image=self.device.image)
                 if is_portal:
-                    self.update()
+                    self.update(allow_error=True)
                     grid = self.view[self.view.center_loca]
 
                 # Combat
@@ -373,7 +382,10 @@ class Fleet(Camera, AmbushHandler):
                     elif may_submarine_icon and grid.predict_current_fleet():
                         arrive_predict = '(may_submarine_icon, is_current_fleet)'
                         arrive_checker = True
-                    elif self.config.MAP_WALK_USE_CURRENT_FLEET and grid.predict_current_fleet():
+                    elif self.config.MAP_WALK_USE_CURRENT_FLEET \
+                            and expected != 'combat_boss' \
+                            and not ('combat' in expected and grid.may_boss) \
+                            and (grid.predict_fleet() or grid.predict_current_fleet()):
                         arrive_predict = '(MAP_WALK_USE_CURRENT_FLEET, is_current_fleet)'
                         arrive_checker = True
                     elif walk_timeout.reached() and grid.predict_current_fleet():
@@ -445,6 +457,9 @@ class Fleet(Camera, AmbushHandler):
             self.find_path_initial()
             raise MapEnemyMoved
         self.find_path_initial()
+        if self.config.MAP_HAS_DECOY_ENEMY:
+            if result == 'nothing' and expected == 'combat':
+                raise MapEnemyMoved
 
     def goto(self, location, optimize=None, expected=''):
         """
@@ -518,6 +533,8 @@ class Fleet(Camera, AmbushHandler):
         logger.info(f'Submarine: {location2node(self.fleet_submarine_location)}')
 
     def full_scan(self, queue=None, must_scan=None, mode='normal'):
+        if self.config.MAP_HAS_DECOY_ENEMY and mode == 'normal':
+            mode = 'decoy'
         super().full_scan(
             queue=queue, must_scan=must_scan, battle_count=self.battle_count, mystery_count=self.mystery_count,
             siren_count=self.siren_count, carrier_count=self.carrier_count, mode=mode)
@@ -1138,8 +1155,8 @@ class Fleet(Camera, AmbushHandler):
         """
         if not (self.is_call_submarine_at_boss and self.map.select(is_submarine_spawn_point=True)):
             return False
-        if self.config.Submarine_DistanceToBoss == 'use_U522_skill':
-            logger.info('Going to use U522 skill, skip moving submarines')
+        if self.config.Submarine_DistanceToBoss == 'use_open_ocean_support':
+            logger.info('Going to use Open Ocean Support, skip moving submarines')
             return False
 
         boss = location_ensure(boss)

@@ -3,7 +3,8 @@ import numpy as np
 from module.handler.assets import *
 from module.handler.info_handler import InfoHandler
 from module.logger import logger
-from module.template.assets import TEMPLATE_FORMATION_1, TEMPLATE_FORMATION_2, TEMPLATE_FORMATION_3
+from module.template.assets import (TEMPLATE_FORMATION_1, TEMPLATE_FORMATION_2,
+                                    TEMPLATE_FORMATION_3)
 from module.ui.switch import Switch
 
 formation = Switch('Formation', offset=120)
@@ -94,7 +95,7 @@ class StrategyHandler(InfoHandler):
         self.strategy_set_execute(
             formation_index=expected_formation,
             sub_view=False,
-            sub_hunt=bool(self.config.Submarine_Fleet) and self.config.Submarine_Mode == 'hunt_only'
+            sub_hunt=bool(self.config.Submarine_Fleet) and self.config.Submarine_Mode in ['hunt_only', 'hunt_and_boss']
         )
         self.strategy_close()
         self.__setattr__(f'fleet_{index}_formation_fixed', True)

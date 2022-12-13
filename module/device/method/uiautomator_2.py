@@ -1,18 +1,23 @@
+import typing as t
+from dataclasses import dataclass
+from functools import wraps
 from json.decoder import JSONDecodeError
+from subprocess import list2cmdline
 
 import uiautomator2 as u2
 from adbutils.errors import AdbError
 from lxml import etree
 
-from module.base.decorator import cached_property
 from module.base.utils import *
 from module.device.connection import Connection
-from module.device.method.utils import possible_reasons, handle_adb_error, RETRY_TRIES, RETRY_DELAY
+from module.device.method.utils import (RETRY_DELAY, RETRY_TRIES,
+                                        handle_adb_error, PackageNotInstalled, possible_reasons)
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 
 
 def retry(func):
+    @wraps(func)
     def retry_wrapper(self, *args, **kwargs):
         """
         Args:
@@ -36,8 +41,7 @@ def retry(func):
                 logger.error(e)
 
                 def init():
-                    self.adb_disconnect(self.serial)
-                    self.adb_connect(self.serial)
+                    self.adb_reconnect()
             # In `device.set_new_command_timeout(604800)`
             # json.decoder.JSONDecodeError: Expecting value: line 1 column 2 (char 1)
             except JSONDecodeError as e:
@@ -50,16 +54,14 @@ def retry(func):
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
-                        self.adb_disconnect(self.serial)
-                        self.adb_connect(self.serial)
+                        self.adb_reconnect()
                 else:
                     break
             # RuntimeError: USB device 127.0.0.1:5555 is offline
             except RuntimeError as e:
                 if handle_adb_error(e):
                     def init():
-                        self.adb_disconnect(self.serial)
-                        self.adb_connect(self.serial)
+                        self.adb_reconnect()
                 else:
                     break
             # In `assert c.read string(4) == _OKAY`
@@ -71,6 +73,12 @@ def retry(func):
                     'please enable ADB in the settings of your emulator'
                 )
                 break
+            # Package not installed
+            except PackageNotInstalled as e:
+                logger.error(e)
+
+                def init():
+                    self.detect_package()
             # Unknown, probably a trucked image
             except Exception as e:
                 logger.exception(e)
@@ -84,17 +92,27 @@ def retry(func):
     return retry_wrapper
 
 
-class Uiautomator2(Connection):
-    @cached_property
-    def u2(self) -> u2.Device:
-        device = u2.connect(self.serial)
-        device.set_new_command_timeout(604800)
-        return device
+@dataclass
+class ProcessInfo:
+    pid: int
+    ppid: int
+    thread_count: int
+    cmdline: str
+    name: str
 
+
+@dataclass
+class ShellBackgroundResponse:
+    success: bool
+    pid: int
+    description: str
+
+
+class Uiautomator2(Connection):
     @retry
     def screenshot_uiautomator2(self):
         image = self.u2.screenshot(format='raw')
-        image = np.fromstring(image, np.uint8)
+        image = np.frombuffer(image, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         return image
@@ -191,17 +209,20 @@ class Uiautomator2(Connection):
         return result['package']
 
     @retry
-    def app_start_uiautomator2(self, package_name):
+    def app_start_uiautomator2(self, package_name=None):
+        if not package_name:
+            package_name = self.package
         try:
             self.u2.app_start(package_name)
         except u2.exceptions.BaseError as e:
             # BaseError: package "com.bilibili.azurlane" not found
             logger.error(e)
-            possible_reasons(f'"{package_name}" not found, please check setting Emulator.PackageName')
-            raise RequestHumanTakeover
+            raise PackageNotInstalled(package_name)
 
     @retry
-    def app_stop_uiautomator2(self, package_name):
+    def app_stop_uiautomator2(self, package_name=None):
+        if not package_name:
+            package_name = self.package
         self.u2.app_stop(package_name)
 
     @retry
@@ -209,3 +230,48 @@ class Uiautomator2(Connection):
         content = self.u2.dump_hierarchy(compressed=True)
         hierarchy = etree.fromstring(content.encode('utf-8'))
         return hierarchy
+
+    @retry
+    def proc_list_uiautomato2(self) -> t.List[ProcessInfo]:
+        """
+        Get info about current processes.
+        """
+        resp = self.u2.http.get("/proc/list", timeout=10)
+        resp.raise_for_status()
+        result = [
+            ProcessInfo(
+                pid=proc['pid'],
+                ppid=proc['ppid'],
+                thread_count=proc['threadCount'],
+                cmdline=' '.join(proc['cmdline']),
+                name=proc['name'],
+            ) for proc in resp.json()
+        ]
+        return result
+
+    @retry
+    def u2_shell_background(self, cmdline, timeout=10) -> ShellBackgroundResponse:
+        """
+        Run at background.
+
+        Note that this function will always return a success response,
+        as this is a untested and hidden method in ATX.
+        """
+        if isinstance(cmdline, (list, tuple)):
+            cmdline = list2cmdline(cmdline)
+        elif isinstance(cmdline, str):
+            cmdline = cmdline
+        else:
+            raise TypeError("cmdargs type invalid", type(cmdline))
+
+        data = dict(command=cmdline, timeout=str(timeout))
+        ret = self.u2.http.post("/shell/background", data=data, timeout=timeout + 10)
+        ret.raise_for_status()
+
+        resp = ret.json()
+        resp = ShellBackgroundResponse(
+            success=bool(resp.get('success', False)),
+            pid=resp.get('pid', 0),
+            description=resp.get('description', '')
+        )
+        return resp

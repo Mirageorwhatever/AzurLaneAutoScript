@@ -1,7 +1,7 @@
 Deploy:
   Git:
     # URL of AzurLaneAutoScript repository
-    # [CN user] Use 'https://gitee.com/LmeSzinc/AzurLaneAutoScript' for faster and more stable download
+    # [CN user] Use 'https://gitee.com/lmeszinc/azur-lane-auto-script-mirror' for faster and more stable download
     # [Other] Use 'https://github.com/LmeSzinc/AzurLaneAutoScript'
     Repository: https://github.com/LmeSzinc/AzurLaneAutoScript
     # Branch of Alas
@@ -16,6 +16,10 @@ Deploy:
     # [CN user] Use your local http proxy (http://127.0.0.1:{port}) or socks5 proxy (socks5://127.0.0.1:{port})
     # [Other] Use null
     GitProxy: null
+    # Set SSL Verify
+    # [In most cases] Use true
+    # [Other] Use false to when connected to an untrusted network
+    SSLVerify: true
     # Update Alas at startup
     # [In most cases] Use true
     AutoUpdate: true
@@ -86,7 +90,7 @@ Deploy:
     # This may cause problem https://github.com/LmeSzinc/AzurLaneAutoScript/issues/876
     EnableReload: true
     # Check update every X minute
-    # [Disable] -1
+    # [Disable] 0
     # [Default] 5
     CheckUpdateInterval: 5
     # Scheduled restart time
@@ -99,6 +103,23 @@ Deploy:
   Misc:
     # Enable discord rich presence
     DiscordRichPresence: false
+
+  RemoteAccess:
+    # Enable remote access (using ssh reverse tunnel serve by https://github.com/wang0618/localshare)
+    # ! You need to set Password below to enable remote access since everyone can access to your alas if they have your url.
+    # See here (http://app.azurlane.cloud/en.html) for more infomation.
+    EnableRemoteAccess: false
+    # Username when login into ssh server
+    # [Default] null (will generate a random one when startup)
+    SSHUser: null
+    # Server to connect
+    # [Default] null
+    # [Format] host:port
+    SSHServer: null
+    # Filepath of SSH executable `ssh.exe`
+    # [Default] ssh (find ssh in system PATH)
+    # If you don't have one, install OpenSSH or download it here (https://github.com/PowerShell/Win32-OpenSSH/releases)
+    SSHExecutable: ssh
 
   Webui:
     # --host. Host to listen
@@ -129,4 +150,10 @@ Deploy:
     # --cdn. Use jsdelivr cdn for pywebio static files (css, js).
     # 'true' for jsdelivr cdn
     # 'false' for self host cdn (automatically)
+    # 'https://path.to.your/cdn' to use custom cdn
     CDN: false
+    # --run. Auto-run specified config when startup
+    # 'null' default no specified config
+    # '["alas"]' specified "alas" config
+    # '["alas","alas2"]' specified "alas" "alas2" configs
+    Run: null

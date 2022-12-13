@@ -54,20 +54,16 @@
       "name": "主线图",
       "help": ""
     },
-    "C72MysteryFarming": {
-      "name": "7-2 三战捡垃圾",
+    "Main2": {
+      "name": "主线图-2",
       "help": ""
     },
-    "C122MediumLeveling": {
-      "name": "12-2 中型练级",
-      "help": ""
-    },
-    "C124LargeLeveling": {
-      "name": "12-4 大型练级",
+    "Main3": {
+      "name": "主线图-3",
       "help": ""
     },
     "GemsFarming": {
-      "name": "紧急委托刷钻石",
+      "name": "刷紧急委托",
       "help": ""
     },
     "EventGeneral": {
@@ -78,12 +74,24 @@
       "name": "活动图",
       "help": ""
     },
-    "EventAb": {
-      "name": "活动每日AB图",
+    "Event2": {
+      "name": "活动图-2",
       "help": ""
     },
-    "EventCd": {
-      "name": "活动每日CD图",
+    "EventA": {
+      "name": "活动每日A图",
+      "help": ""
+    },
+    "EventB": {
+      "name": "活动每日B图",
+      "help": ""
+    },
+    "EventC": {
+      "name": "活动每日C图",
+      "help": ""
+    },
+    "EventD": {
+      "name": "活动每日D图",
       "help": ""
     },
     "EventSp": {
@@ -146,20 +154,8 @@
       "name": "每日抽卡",
       "help": ""
     },
-    "DataKey": {
-      "name": "档案密钥",
-      "help": ""
-    },
-    "SupplyPack": {
-      "name": "优惠礼包",
-      "help": ""
-    },
-    "BattlePass": {
-      "name": "大月卡",
-      "help": ""
-    },
-    "MetaReward": {
-      "name": "Meta奖励",
+    "Freebies": {
+      "name": "白嫖奖励",
       "help": ""
     },
     "Daily": {
@@ -186,8 +182,12 @@
       "name": "通用设置",
       "help": ""
     },
-    "OpsiAshAssist": {
+    "OpsiAshBeacon": {
       "name": "余烬信标",
+      "help": ""
+    },
+    "OpsiAshAssist": {
+      "name": "信标支援",
       "help": ""
     },
     "OpsiExplore": {
@@ -196,6 +196,10 @@
     },
     "OpsiShop": {
       "name": "大世界商店",
+      "help": ""
+    },
+    "OpsiVoucher": {
+      "name": "兑换商店",
       "help": ""
     },
     "OpsiDaily": {
@@ -210,6 +214,10 @@
       "name": "深渊海域",
       "help": ""
     },
+    "OpsiArchive": {
+      "name": "档案坐标",
+      "help": "从白票商店购买档案坐标并运行，档案海域不消耗行动力\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
+    },
     "OpsiStronghold": {
       "name": "塞壬要塞",
       "help": ""
@@ -217,6 +225,14 @@
     "OpsiMeowfficerFarming": {
       "name": "短猫相接",
       "help": ""
+    },
+    "OpsiHazard1Leveling": {
+      "name": "侵蚀1练级",
+      "help": ""
+    },
+    "OpsiCrossMonth": {
+      "name": "跨月每日",
+      "help": "    Alas将在大世界跨月重置之前10分钟进入大世界，等待大世界重置但不退出大世界，然后完成新一天的大世界每日、隐秘海域、深渊海域和短猫相接，以获得额外的金菜。运行大世界每日时，按\"大世界每日\"任务设置运行，其余同理。\n    重要：Alas等待跨月期间，请不要操作游戏。"
     },
     "Daemon": {
       "name": "半自动点击",
@@ -246,7 +262,7 @@
     },
     "Enable": {
       "name": "启用该功能",
-      "help": "将这个任务加入调度器"
+      "help": "将这个任务加入调度器\n委托、科研、收获任务是强制打开的"
     },
     "NextRun": {
       "name": "下一次运行时间",
@@ -276,19 +292,95 @@
     },
     "Serial": {
       "name": "模拟器 Serial",
-      "help": "模拟器默认 Serial：\n- 蓝叠模拟器 127.0.0.1:5555\n- 蓝叠模拟器4 Hyper-v版，填\"bluestacks4-hyperv\"自动连接，多开填\"bluestacks4-hyperv-2\"以此类推\n- 蓝叠模拟器5 Hyper-v版，填\"bluestacks5-hyperv\"自动连接，多开填\"bluestacks5-hyperv-1\"以此类推\n- 夜神模拟器 127.0.0.1:62001\n- 夜神模拟器64位 127.0.0.1:59865\n- MuMu模拟器 127.0.0.1:7555\n- 逍遥模拟器 127.0.0.1:21503\n- 雷电模拟器 emulator-5554 或 127.0.0.1:5555\n- WSA，填\"wsa-0\"使游戏在后台运行，需要使用第三方软件操控或关闭（建议使用scrcpy操控）\n如果你有多个模拟器，它们的 Serial 将不是默认的，可以在 console.bat 中执行 `adb devices` 查询"
+      "help": "填 \"auto\" 自动检测模拟器，有多个模拟器正在运行时必须手动填写 Serial\n模拟器默认 Serial：\n- 蓝叠模拟器 127.0.0.1:5555\n- 蓝叠模拟器4 Hyper-v版，填\"bluestacks4-hyperv\"自动连接，多开填\"bluestacks4-hyperv-2\"以此类推\n- 蓝叠模拟器5 Hyper-v版，填\"bluestacks5-hyperv\"自动连接，多开填\"bluestacks5-hyperv-1\"以此类推\n- 夜神模拟器 127.0.0.1:62001\n- 夜神模拟器64位 127.0.0.1:59865\n- MuMu模拟器 127.0.0.1:7555\n- 逍遥模拟器 127.0.0.1:21503\n- 雷电模拟器 emulator-5554 或 127.0.0.1:5555\n- WSA，填\"wsa-0\"使游戏在后台运行，需要使用第三方软件操控或关闭（建议使用scrcpy操控）\n如果你有多个模拟器，它们的 Serial 将不是默认的，可以在 console.bat 中执行 `adb devices` 查询"
     },
     "PackageName": {
-      "name": "游戏包名",
-      "help": "国服 com.bilibili.azurlane\n国际服 com.YoStarEN.AzurLane\n日服 com.YoStarJP.AzurLane\n台服 com.hkmanjuu.azurlane.gp\n国服渠道服需要自行查找"
-    },
-    "Server": {
       "name": "游戏服务器",
-      "help": "",
-      "cn": "国服",
-      "en": "国际服",
-      "jp": "日服",
-      "tw": "台服"
+      "help": "模拟器上装有多个游戏客户端时，需要手动选择服务器",
+      "auto": "自动检测",
+      "com.bilibili.azurlane": "国服",
+      "com.YoStarEN.AzurLane": "国际服",
+      "com.YoStarJP.AzurLane": "日服",
+      "com.hkmanjuu.azurlane.gp": "台服",
+      "com.bilibili.blhx.huawei": "国服 华为渠道服 com.bilibili.blhx.huawei",
+      "com.bilibili.blhx.mi": "国服 小米渠道服 com.bilibili.blhx.mi",
+      "com.tencent.tmgp.bilibili.blhx": "国服 腾讯应用宝渠道服 com.tencent.tmgp.bilibili.blhx",
+      "com.bilibili.blhx.baidu": "国服 百度渠道服 com.bilibili.blhx.baidu",
+      "com.bilibili.blhx.qihoo": "国服 360渠道服 com.bilibili.blhx.qihoo",
+      "com.bilibili.blhx.nearme.gamecenter": "国服 oppo渠道服 com.bilibili.blhx.nearme.gamecenter",
+      "com.bilibili.blhx.vivo": "国服 vivo渠道服 com.bilibili.blhx.vivo",
+      "com.bilibili.blhx.mz": "国服 魅族渠道服 com.bilibili.blhx.mz",
+      "com.bilibili.blhx.uc": "国服 UC九游渠道服 com.bilibili.blhx.uc",
+      "com.bilibili.blhx.mzw": "国服 拇指玩渠道服 com.bilibili.blhx.mzw",
+      "com.yiwu.blhx.yx15": "国服 一五游戏渠道服 com.yiwu.blhx.yx15",
+      "com.bilibili.blhx.m4399": "国服 4399渠道服 com.bilibili.blhx.m4399",
+      "com.hkmanjuu.azurlane.gp.mc": "台服 com.hkmanjuu.azurlane.gp.mc"
+    },
+    "ServerName": {
+      "name": "游戏内服务器",
+      "help": "选择游戏内所在的服务器以启用服务器状态检测\n当服务器维护或网络不可用时挂起直到恢复",
+      "disabled": "disabled",
+      "cn_android-0": "[国服] 莱茵演习",
+      "cn_android-1": "[国服] 巴巴罗萨",
+      "cn_android-2": "[国服] 霸王行动",
+      "cn_android-3": "[国服] 冰山行动",
+      "cn_android-4": "[国服] 彩虹计划",
+      "cn_android-5": "[国服] 发电机计划",
+      "cn_android-6": "[国服] 瞭望台行动",
+      "cn_android-7": "[国服] 十字路口行动",
+      "cn_android-8": "[国服] 朱诺行动",
+      "cn_android-9": "[国服] 杜立特空袭",
+      "cn_android-10": "[国服] 地狱犬行动",
+      "cn_android-11": "[国服] 开罗宣言",
+      "cn_android-12": "[国服] 奥林匹克行动",
+      "cn_android-13": "[国服] 小王冠行动",
+      "cn_android-14": "[国服] 波茨坦公告",
+      "cn_android-15": "[国服] 白色方案",
+      "cn_android-16": "[国服] 瓦尔基里行动",
+      "cn_android-17": "[国服] 曼哈顿计划",
+      "cn_android-18": "[国服] 八月风暴",
+      "cn_android-19": "[国服] 秋季旅行",
+      "cn_android-20": "[国服] 水星行动",
+      "cn_android-21": "[国服] 莱茵河卫兵",
+      "cn_android-22": "[国服] 北极光计划",
+      "cn_ios-0": "[国服] 夏威夷",
+      "cn_ios-1": "[国服] 珊瑚海",
+      "cn_ios-2": "[国服] 中途岛",
+      "cn_ios-3": "[国服] 铁底湾",
+      "cn_ios-4": "[国服] 所罗门",
+      "cn_ios-5": "[国服] 马里亚纳",
+      "cn_ios-6": "[国服] 莱特湾",
+      "cn_ios-7": "[国服] 硫磺岛",
+      "cn_ios-8": "[国服] 冲绳岛",
+      "cn_ios-9": "[国服] 阿留申群岛",
+      "cn_ios-10": "[国服] 马耳他",
+      "cn_channel-0": "[国服] 皇家巡游",
+      "cn_channel-1": "[国服] 大西洋宪章",
+      "cn_channel-2": "[国服] 十字军行动",
+      "cn_channel-3": "[国服] 龙骑兵行动",
+      "en-0": "[EN] Avrora",
+      "en-1": "[EN] Lexington",
+      "en-2": "[EN] Sandy",
+      "en-3": "[EN] Washington",
+      "en-4": "[EN] Amagi",
+      "jp-0": "[JP] ブレスト",
+      "jp-1": "[JP] 横須賀",
+      "jp-2": "[JP] 佐世保",
+      "jp-3": "[JP] 呉",
+      "jp-4": "[JP] 舞鶴",
+      "jp-5": "[JP] ルルイエ",
+      "jp-6": "[JP] サモア",
+      "jp-7": "[JP] 大湊",
+      "jp-8": "[JP] トラック",
+      "jp-9": "[JP] ラバウル",
+      "jp-10": "[JP] 鹿児島",
+      "jp-11": "[JP] マドラス",
+      "jp-12": "[JP] サンディエゴ",
+      "jp-13": "[JP] 竹敷",
+      "jp-14": "[JP] キール",
+      "jp-15": "[JP] 若松",
+      "jp-16": "[JP] オデッサ",
+      "jp-17": "[JP] スイートバン"
     },
     "ScreenshotMethod": {
       "name": "模拟器截图方案",
@@ -297,7 +389,8 @@
       "ADB_nc": "ADB_nc",
       "uiautomator2": "uiautomator2",
       "aScreenCap": "aScreenCap",
-      "aScreenCap_nc": "aScreenCap_nc"
+      "aScreenCap_nc": "aScreenCap_nc",
+      "DroidCast": "DroidCast"
     },
     "ControlMethod": {
       "name": "模拟器控制方案",
@@ -310,6 +403,32 @@
     "ScreenshotDedithering": {
       "name": "去除图片色彩抖动",
       "help": "在手机上运行时开启"
+    },
+    "AdbRestart": {
+      "name": "在检测不到设备的时候尝试重启adb",
+      "help": ""
+    }
+  },
+  "RestartEmulator": {
+    "_info": {
+      "name": "重启模拟器",
+      "help": ""
+    },
+    "ErrorRestart": {
+      "name": "出错时重启模拟器",
+      "help": "在无法连接到模拟器时自动重启模拟器"
+    },
+    "DailyRestart": {
+      "name": "服务器刷新时重启模拟器",
+      "help": "每天主动重启模拟器以解决内存泄漏问题"
+    },
+    "EmulatorType": {
+      "name": "模拟器类型",
+      "help": "Alas会根据手动填写的Serial寻找对应的模拟器\n如果被启动的模拟器需要管理员权限，请以管理员身份运行Alas\nMuMu模拟器不支持多开",
+      "auto": "自动",
+      "nox_player": "夜神模拟器32位",
+      "bluestacks_5": "蓝叠模拟器5",
+      "mumu_player": "MuMu模拟器"
     }
   },
   "Error": {
@@ -324,6 +443,10 @@
     "SaveError": {
       "name": "出错时，保存 Log 和截图",
       "help": ""
+    },
+    "OnePushConfig": {
+      "name": "错误推送设置",
+      "help": "发生无法处理的异常后，使用 Onepush 推送一条错误信息。配置方法见文档：https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/Onepush-configuration-%5BCN%5D"
     },
     "ScreenshotLength": {
       "name": "出错时，保留最后 X 张截图",
@@ -368,33 +491,56 @@
       "name": "AzurStat ID",
       "help": "上传至 https://azur-stats.lyoko.io 时，声明的客户端 ID\n由随机字符组成，可随意修改"
     },
-    "SaveResearch": {
-      "name": "保存科研截图",
-      "help": ""
+    "API": {
+      "name": "上传线路",
+      "help": "如果国内用户无法连接到 AzurStat，可以使用\"国内反向代理\"",
+      "default": "默认 (Cloudflare)",
+      "cn_gz_reverse_proxy": "国内反向代理 (广州)",
+      "cn_sh_reverse_proxy": "国内反向代理 (上海)"
     },
-    "UploadResearch": {
-      "name": "上传科研截图",
-      "help": ""
+    "ResearchRecord": {
+      "name": "科研截图",
+      "help": "",
+      "do_not": "无操作",
+      "save": "保存",
+      "upload": "上传",
+      "save_and_upload": "保存并上传"
     },
-    "SaveCommission": {
-      "name": "保存委托截图",
-      "help": ""
+    "CommissionRecord": {
+      "name": "委托截图",
+      "help": "",
+      "do_not": "无操作",
+      "save": "保存",
+      "upload": "上传",
+      "save_and_upload": "保存并上传"
     },
-    "UploadCommission": {
-      "name": "上传委托截图",
-      "help": ""
+    "CombatRecord": {
+      "name": "战斗掉落截图",
+      "help": "启用后会放缓结算时的点击速度\n在自律寻敌下不生效",
+      "do_not": "无操作",
+      "save": "保存"
     },
-    "SaveCombat": {
-      "name": "保存战斗掉落截图",
-      "help": "启用后会放缓结算时的点击速度\n在自律寻敌下不生效"
+    "OpsiRecord": {
+      "name": "大世界掉落截图",
+      "help": "",
+      "do_not": "无操作",
+      "save": "保存",
+      "upload": "上传",
+      "save_and_upload": "保存并上传"
     },
-    "SaveOpsi": {
-      "name": "保存大世界掉落截图",
-      "help": ""
+    "MeowfficerBuy": {
+      "name": "指挥喵购买截图",
+      "help": "",
+      "do_not": "无操作",
+      "save": "保存"
     },
-    "UploadOpsi": {
-      "name": "上传大世界掉落截图",
-      "help": ""
+    "MeowfficerTalent": {
+      "name": "指挥喵天赋截图",
+      "help": "",
+      "do_not": "无操作",
+      "save": "保存",
+      "upload": "上传",
+      "save_and_upload": "保存并上传"
     }
   },
   "Retirement": {
@@ -429,7 +575,7 @@
     },
     "EnhanceCheckPerCategory": {
       "name": "每分类强化数量",
-      "help": "每个舰船分类最多强化多少舰船，\n在战斗中的舰船会被跳过且不计入"
+      "help": "每个舰船分类最多强化多少舰船，\n在战斗中的舰船会被跳过且不计入，\n优先判断是否有强化材料"
     },
     "OldRetireN": {
       "name": "退役白皮 ( N )",
@@ -461,46 +607,56 @@
       "name": "活动名称",
       "help": "自动选择至最新的活动",
       "campaign_main": "主线图",
-      "event_20210422_cn": "复兴的赞美诗",
+      "event_20221124_cn": "炼金术士与秘密遗迹群岛",
+      "event_20210325_cn": "复刻箱庭疗法",
+      "event_20201229_cn": "复刻负象限作战",
+      "event_20211111_cn": "杰诺瓦的焰火",
+      "raid_20221027": "战斗！皇家女仆队3rd",
+      "event_20210121_cn": "复刻神圣的悲喜剧",
+      "event_20220915_cn": "紫绛槿岚",
+      "event_20210916_cn": "碧海光粼",
+      "event_20200903_en": "复刻峡湾间的星辰",
+      "event_20220818_cn": "远汇点作战",
       "event_20220324_cn": "虚像构筑之塔",
+      "event_20211028_cn": "复刻穹顶下的圣咏曲",
+      "event_20220728_cn": "雄鹰的叙事歌",
+      "event_20200917_cn": "复刻蝶海梦花",
+      "event_20201029_cn": "激唱的UNIVERSE",
+      "raid_20220630": "来自鸢尾的天使",
+      "raid_20210708": "复刻穿越彼方的水线",
+      "event_20200820_cn": "复刻铁血音符誓言",
+      "event_20201012_cn": "复刻划破海空之翼",
+      "event_20210527_cn": "镜位螺旋",
+      "event_20220526_cn": "泠誓光庭",
+      "raid_20200624": "复刻特别演习埃塞克斯级",
+      "event_20220428_cn": "虹彩的终幕曲",
+      "event_20220414_cn": "复刻永夜幻光",
+      "event_20220407_tw": "蒼紅的迴響(復刻)",
+      "event_20210422_cn": "复兴的赞美诗",
       "event_20220310_tw": "復刻斯圖爾特的硝煙",
       "event_20200603_cn": "复刻峡湾间的反击",
       "event_20220224_cn": "深度回音",
       "event_20210225_cn": "破晓冰华",
       "event_20220210_cn": "复刻北境序曲",
       "raid_20220127": "演习神秘事件调查",
-      "event_20201229_cn": "负象限作战",
       "event_20211229_cn": "逆转彩虹之塔",
       "event_20211125_cn": "交汇世界的弧光",
-      "event_20211111_cn": "杰诺瓦的焰火",
       "event_20211028_tw": "復刻光與影的鳶尾之華",
-      "event_20211028_cn": "复刻穹顶下的圣咏曲",
-      "raid_20210708": "复刻穿越彼方的水线",
-      "event_20201012_cn": "划破海空之翼",
-      "event_20200917_cn": "蝶海梦花",
-      "event_20210916_cn": "碧海光粼",
       "event_20210722_cn": "响彻碧海的偶像歌",
       "event_20210819_cn": "复刻微层混合",
       "event_20200806_cn": "复刻最重要的宝物",
       "event_20200723_cn": "永夜幻光",
-      "event_20200903_en": "复刻峡湾间的星辰",
       "event_20210624_cn": "复刻浮樱影华",
       "event_20210624_tw": "穹頂下的聖詠曲",
       "event_20210610_tw": "夜幕下的歸途",
-      "event_20210527_cn": "镜位螺旋",
       "event_20210527_tw": "微層混合",
       "event_20210429_tw": "復刻墨染的鋼鐵之花",
       "event_20210415_tw": "復刻圍剿施佩伯爵",
-      "event_20210325_cn": "复刻箱庭疗法",
       "event_20210225_tw": "北境序曲",
-      "event_20210121_cn": "复刻神圣的悲喜剧",
       "event_20201126_cn": "假日航线",
       "event_20200312_cn": "复刻斯图尔特的硝烟",
-      "event_20201029_cn": "激唱的UNIVERSE",
       "event_20201002_en": "Counterattack Within the Fjord",
-      "event_20200820_cn": "复刻铁血音符誓言",
       "event_20200716_en": "Ink Stained Steel Sakura Rerun",
-      "raid_20200624": "复刻特别演习埃塞克斯级",
       "event_20200611_en": "Skybound Oratorio",
       "event_20200603_en": "Prelude under the Moon Rerun",
       "event_20200521_en": "Iris of Light and Dark Rerun",
@@ -509,7 +665,15 @@
       "event_20200423_cn": "复刻苍红的回响",
       "event_20200326_cn": "微层混合",
       "event_20200227_cn": "北境序曲",
+      "war_archives_20210819_cn": "档案 微层混合",
+      "war_archives_20200903_cn": "档案 峡湾间的星辰",
+      "war_archives_20201029_cn": "档案 激唱的UNIVERSE",
+      "war_archives_20200806_cn": "档案 最重要的宝物",
+      "war_archives_20210624_cn": "档案 浮樱影华",
+      "war_archives_20210325_cn": "档案 箱庭疗法",
       "war_archives_20190911_cn": "档案 神圣的悲喜剧",
+      "war_archives_20211014_cn": "档案 激奏的Polaris",
+      "war_archives_20200820_cn": "档案 铁血音符誓言",
       "war_archives_20181227_cn": "档案 苍红的回响",
       "war_archives_20180726_cn": "档案 光与影的鸢尾之华",
       "war_archives_20180607_cn": "档案 墨染的钢铁之花",
@@ -565,10 +729,10 @@
       "name": "达成关卡成就后停止",
       "help": "达成地图 100% 通关，达成三星通关，达成安全海域，\n或达成安全海域但不打三星后停止",
       "non_stop": "否",
-      "100_percent_clear": "地图通关",
-      "map_3_stars": "地图三星",
-      "threat_safe": "地图绿海",
-      "threat_safe_without_3_stars": "地图绿海不打三星"
+      "100_percent_clear": "100%通关",
+      "map_3_stars": "100%通关 + 三星",
+      "threat_safe": "100%通关 + 三星 + 安全海域",
+      "threat_safe_without_3_stars": "100%通关 + 安全海域"
     },
     "StageIncrease": {
       "name": "达成关卡成就后前往下一关卡，不停止",
@@ -657,15 +821,7 @@
     },
     "FleetOrder": {
       "name": "舰队职能",
-      "help": "非自律寻敌下生效",
-      "fleet1_mob_fleet2_boss": "一队道中二队boss",
-      "fleet1_boss_fleet2_mob": "一队boss二队道中",
-      "fleet1_all_fleet2_standby": "一队全清二队待机",
-      "fleet1_standby_fleet2_all": "一队待机二队全清"
-    },
-    "AutoSearchFleetOrder": {
-      "name": "自律寻敌设置",
-      "help": "自律寻敌下生效",
+      "help": "非自律寻敌下会捡问号和弹药\n非自律寻敌下进行4战及以下的作战时，会强制使用\"一队全清二队待机\"",
       "fleet1_mob_fleet2_boss": "一队道中二队boss",
       "fleet1_boss_fleet2_mob": "一队boss二队道中",
       "fleet1_all_fleet2_standby": "一队全清二队待机",
@@ -686,10 +842,11 @@
     },
     "Mode": {
       "name": "潜艇出击方案",
-      "help": "",
+      "help": "提醒: '狩猎及BOSS战'为'仅狩猎'与'仅BOSS战'的混合，它会在道中进行狩猎打击，并在BOSS战尝试召唤潜艇。",
       "do_not_use": "不使用",
       "hunt_only": "仅狩猎",
       "boss_only": "仅BOSS战",
+      "hunt_and_boss": "狩猎及BOSS战",
       "every_combat": "每战出击"
     },
     "AutoSearchMode": {
@@ -700,11 +857,11 @@
     },
     "DistanceToBoss": {
       "name": "BOSS战前将潜艇移动到BOSS附近",
-      "help": "仅在\"潜艇出击方案\"为\"仅BOSS战\"时生效\n选择\"距离BOSS X格\"需要保证潜艇狩猎范围能覆盖到BOSS，距离使用曼哈顿距离计算，选择\"使用U522技能\"需要潜艇队伍里有U522",
+      "help": "仅在\"潜艇出击方案\"为\"仅BOSS战\"及\"狩猎及BOSS战\",时生效\n选择\"距离BOSS X格\"需要保证潜艇狩猎范围能覆盖到BOSS，距离使用曼哈顿距离计算，选择\"使用远洋支援\"需要潜艇队伍里有U522/达芬奇",
       "to_boss_position": "至 BOSS 所在位置",
       "1_grid_to_boss": "距离 BOSS 1 格",
       "2_grid_to_boss": "距离 BOSS 2 格",
-      "use_U522_skill": "使用 U522 技能"
+      "use_open_ocean_support": "使用 远洋支援"
     }
   },
   "Emotion": {
@@ -890,12 +1047,12 @@
   },
   "GemsFarming": {
     "_info": {
-      "name": "紧急委托刷钻石",
-      "help": "警告: 这不是一个能高效获取钻石的方法, 也不是一个有高收益的刷物资方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n能通过这个功能获取有效收益的, 只有零氪玩家, 希望你能理性看待它\n\n这个功能将在旗舰32级之后, 将旗舰更换为1级白皮零破航母\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为35级以下白皮零破航母\n二队会提供跨队支援, 应该有新泽西和信浓"
+      "name": "刷紧急委托",
+      "help": "警告: 这个功能可以让玩家获取少量的钻石，但不是一个能高效获取钻石的方法\n玩碧蓝航线不久的玩家, 很容易迷信零破和低耗等, 而忽视了角色养成\n运行这个功能只会让你自己感觉很充实, 而你的帐号实际零提升\n这个功能的主要用途，是让阵容成型的玩家获取额外的魔方，请理性地把钻石当作副产物\n\n这个功能将在旗舰32级之后, 将旗舰更换为1级白皮零破航母\n关于紧急委托刷新机制, 可阅读 https://bbs.nga.cn/read.php?tid=27134956\n委托油耗比: A3 > A1 > 2-4 > 2-1, 有活动图时建议选活动图, 2-1会拣问号有更多物资\n一队会完成所有的战斗, 前排应当为百级零破驱逐带输出装, 后排应该为35级以下白皮零破航母\n二队会提供跨队支援, 应该有新泽西和信浓"
     },
     "FlagshipChange": {
       "name": "更换旗舰",
-      "help": "寻找等级为1的白皮航母"
+      "help": "寻找等级在1-32之间的白皮航母，同时会在退役时选择更换下来的旗舰。\n所有等级大于1级的白皮航母均会被视为退役目标，请务必锁定不是目标的船。"
     },
     "FlagshipEquipChange": {
       "name": "更换旗舰的装备",
@@ -903,7 +1060,7 @@
     },
     "VanguardChange": {
       "name": "更换前排",
-      "help": "换前排通过找一艘150心情等级100的白鹰白皮驱逐完成，所以尽量保证有足够多的驱逐在后排休息。\n不启用将不更换前排"
+      "help": "换前排通过找一艘心情不低于10、等级100的白鹰白皮驱逐完成，所以尽量保证有足够多的驱逐。\n国服以外则为等级70的白鹰白船驱逐。\n不启用将不更换前排"
     },
     "VanguardEquipChange": {
       "name": "更换前排的装备",
@@ -921,6 +1078,10 @@
       "bogue": "博格",
       "ranger": "突击者",
       "hermes": "竞技神"
+    },
+    "CommissionLimit": {
+      "name": "防止紧急委托数量过多",
+      "help": "在7x24运行时防止紧急委托数量过多做不完每日委托，建议在委托过滤器仅选择短时长高收益委托"
     }
   },
   "EventGeneral": {
@@ -937,23 +1098,30 @@
       "help": "当本地时间超过给定数值后，禁用所有活动任务，'2020-01-01 00:00:00' 表示不限制，触发一次后时间将被重置\n设置后能防止活动结束后忘记关闭任务的事情发生"
     }
   },
-  "EventAb": {
+  "TaskBalancer": {
     "_info": {
-      "name": "活动每日AB图",
+      "name": "任务平衡设置",
+      "help": "防止运行活动图时物资过低"
+    },
+    "Enable": {
+      "name": "启用任务平衡",
+      "help": "启用后，将于每次出击后检查物资量"
+    },
+    "CoinLimit": {
+      "name": "保持物资大于X",
       "help": ""
     },
-    "StageFilter": {
-      "name": "活动每日过滤器",
-      "help": "按过滤器顺序出击"
-    },
-    "LastStage": {
-      "name": "上一个完成的关卡",
-      "help": "自动更新的数值，将跳过过滤器中已完成的关卡，过0点重置"
+    "TaskCall": {
+      "name": "物资过低时呼叫任务X",
+      "help": "提醒: 玩家需提前设置好被调用的任务，否则将不会作用",
+      "Main": "主线图",
+      "Main2": "主线图-2",
+      "Main3": "主线图-3"
     }
   },
-  "EventCd": {
+  "EventDaily": {
     "_info": {
-      "name": "活动每日CD图",
+      "name": "活动每日",
       "help": ""
     },
     "StageFilter": {
@@ -1011,9 +1179,19 @@
       "name": "做主要委托（1200油/1000油委托）",
       "help": ""
     },
-    "CommissionFilter": {
+    "PresetFilter": {
       "name": "委托过滤器",
-      "help": "一般不需要修改"
+      "help": "如果对委托的产出和收益没有足够的了解，不建议编写自定义过滤器，建议使用预优化委托过滤器\n如果24小时运行刷紧急委托功能，应当使用（7x24刷委托）的过滤器\n不推荐在运行刷紧急委托功能的同时使用石油优先过滤器",
+      "chip": "钻石>心智>魔方",
+      "chip_24h": "钻石>心智>魔方（7x24刷委托）",
+      "cube": "钻石>魔方>石油",
+      "cube_24h": "钻石>魔方>石油（7x24刷委托）",
+      "oil": "钻石>石油>魔方",
+      "custom": "自定义"
+    },
+    "CustomFilter": {
+      "name": "自定义委托过滤器",
+      "help": "使用自定义过滤器需将 \"委托过滤器\" 设置为 \"自定义\"，并阅读 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/filter_string_cn"
     }
   },
   "Tactical": {
@@ -1024,6 +1202,15 @@
     "TacticalFilter": {
       "name": "战术学院过滤器",
       "help": "一般不需要修改"
+    },
+    "RapidTrainingSlot": {
+      "name": "使用快速学习",
+      "help": "活动期间有每天10次的快速技能学习",
+      "do_not_use": "不使用",
+      "slot_1": "使用于1号位",
+      "slot_2": "使用于2号位",
+      "slot_3": "使用于3号位",
+      "slot_4": "使用于4号位"
     }
   },
   "ControlExpOverflow": {
@@ -1052,6 +1239,20 @@
       "help": ""
     }
   },
+  "AddNewStudent": {
+    "_info": {
+      "name": "学习新技能",
+      "help": "当战术学院有空余的位置时，将自动指派一个舰娘，并学习第一个未满级的技能"
+    },
+    "Enable": {
+      "name": "启用该功能",
+      "help": ""
+    },
+    "Favorite": {
+      "name": "优先选择常用",
+      "help": ""
+    }
+  },
   "Research": {
     "_info": {
       "name": "科研",
@@ -1061,32 +1262,47 @@
       "name": "使用魔方",
       "help": "",
       "always_use": "总是使用",
-      "only_05_hour": "仅0.5小时科研使用",
+      "only_05_hour": "0.5小时+无项目可做时",
+      "only_no_project": "无项目可做时",
       "do_not_use": "不使用"
     },
     "UseCoin": {
       "name": "使用物资",
       "help": "",
       "always_use": "总是使用",
-      "only_05_hour": "仅0.5小时科研使用",
+      "only_05_hour": "0.5小时+无项目可做时",
+      "only_no_project": "无项目可做时",
       "do_not_use": "不使用"
     },
     "UsePart": {
       "name": "使用部件",
       "help": "",
       "always_use": "总是使用",
-      "only_05_hour": "仅0.5小时科研使用",
+      "only_05_hour": "0.5小时+无项目可做时",
+      "only_no_project": "无项目可做时",
       "do_not_use": "不使用"
+    },
+    "AllowDelay": {
+      "name": "资源不足时延迟科研",
+      "help": "资源不足时Alas会延迟科研直到满足条件或科研队列即将清空，不会导致科研停转\n如果长期保持资源不足或运行Alas的时间不够长，可以取消本选项以保持科研队列装满"
     },
     "PresetFilter": {
       "name": "科研过滤器",
       "help": "科研掉落和项目刷新见 https://azur-stats.lyoko.io/，对这些没有基本了解的人不建议编写自定义过滤器，建议使用预优化科研过滤器",
       "custom": "自定义",
+      "series_5_blueprint_152": "五期 蓝图+152",
+      "series_5_blueprint_only": "五期 仅蓝图",
+      "series_5_152_only": "五期 仅152",
       "series_4_blueprint_tenrai": "四期 蓝图+天雷",
       "series_4_blueprint_only": "四期 仅蓝图",
       "series_4_tenrai_only": "四期 仅天雷",
-      "series_3": "三期",
-      "series_3_than_2": "三期兼顾二期"
+      "series_3_blueprint_234": "三期 蓝图+234",
+      "series_3_blueprint_only": "三期 仅蓝图",
+      "series_3_234_only": "三期 仅234",
+      "series_2_than_3_457_234": "二期兼顾三期 457+234",
+      "series_2_blueprint_457": "二期 蓝图+457",
+      "series_2_blueprint_only": "二期 仅蓝图",
+      "series_2_457_only": "二期 仅457"
     },
     "CustomFilter": {
       "name": "自定义科研过滤器",
@@ -1362,14 +1578,65 @@
       "champagne": "香槟"
     }
   },
-  "MedalShop": {
+  "MedalShop2": {
     "_info": {
-      "name": "兑换商店（退役兑换）",
+      "name": "功勋商店（退役兑换）",
       "help": ""
     },
     "Filter": {
       "name": "商店过滤器",
       "help": ""
+    },
+    "RETROFIT_T1": {
+      "name": "蓝色改造图纸选择",
+      "help": "",
+      "dd": "驱逐",
+      "cl": "巡洋",
+      "bb": "战列",
+      "cv": "航母"
+    },
+    "RETROFIT_T2": {
+      "name": "紫色改造图纸选择",
+      "help": "",
+      "dd": "驱逐",
+      "cl": "巡洋",
+      "bb": "战列",
+      "cv": "航母"
+    },
+    "RETROFIT_T3": {
+      "name": "金色改造图纸选择",
+      "help": "",
+      "dd": "驱逐",
+      "cl": "巡洋",
+      "bb": "战列",
+      "cv": "航母"
+    },
+    "PLATE_T1": {
+      "name": "白色部件选择",
+      "help": "",
+      "general": "通用",
+      "gun": "主炮",
+      "torpedo": "鱼雷",
+      "antiair": "防空",
+      "plane": "舰载机"
+    },
+    "PLATE_T2": {
+      "name": "蓝色部件选择",
+      "help": "",
+      "general": "通用",
+      "gun": "主炮",
+      "torpedo": "鱼雷",
+      "antiair": "防空",
+      "plane": "舰载机"
+    },
+    "PLATE_T3": {
+      "name": "紫色部件选择",
+      "help": "",
+      "general": "通用",
+      "gun": "主炮",
+      "torpedo": "鱼雷",
+      "antiair": "防空",
+      "plane": "舰载机"
     }
   },
   "MeritShop": {
@@ -1442,19 +1709,13 @@
       "9": "9",
       "10": "10"
     },
+    "UseTicket": {
+      "name": "使用单次建造券",
+      "help": "开启后支持建造券的池将优先使用建造券建造，无建造券及建造一般池时仍使用魔方建造"
+    },
     "UseDrill": {
       "name": "使用钻头完成建造",
       "help": "选否会等到明天再下水，能贪一个钻头"
-    }
-  },
-  "SupplyPack": {
-    "_info": {
-      "name": "优惠礼包",
-      "help": ""
-    },
-    "WeeklyFreeSupplyPack": {
-      "name": "购买每周免费礼包",
-      "help": ""
     }
   },
   "BattlePass": {
@@ -1462,18 +1723,50 @@
       "name": "大月卡",
       "help": ""
     },
-    "BattlePassReward": {
+    "Collect": {
       "name": "领取大月卡奖励",
       "help": ""
     }
   },
-  "MetaReward": {
+  "DataKey": {
     "_info": {
-      "name": "Meta 奖励",
+      "name": "档案秘钥",
       "help": ""
     },
-    "MetaReward": {
-      "name": "领取 Meta 奖励",
+    "Collect": {
+      "name": "领取档案秘钥",
+      "help": ""
+    },
+    "ForceCollect": {
+      "name": "强制领取档案秘钥",
+      "help": "档案秘钥已满时，强制领取（消除红点）"
+    }
+  },
+  "Mail": {
+    "_info": {
+      "name": "领取邮件",
+      "help": ""
+    },
+    "Collect": {
+      "name": "领取邮件",
+      "help": ""
+    },
+    "Filter": {
+      "name": "邮件过滤器",
+      "help": "默认只领取演习功勋邮件"
+    },
+    "Delete": {
+      "name": "删除已读邮件",
+      "help": ""
+    }
+  },
+  "SupplyPack": {
+    "_info": {
+      "name": "优惠礼包",
+      "help": ""
+    },
+    "Collect": {
+      "name": "购买每周免费礼包",
       "help": ""
     }
   },
@@ -1565,6 +1858,23 @@
       "first": "第一个",
       "second": "第二个",
       "third": "第三个"
+    },
+    "ModuleDevelopment": {
+      "name": "兵装训练（兵装本）",
+      "help": "",
+      "skip": "不打",
+      "first": "第一个",
+      "second": "第二个"
+    },
+    "ModuleDevelopmentFleet": {
+      "name": "兵装训练出击舰队",
+      "help": "",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     }
   },
   "Hard": {
@@ -1641,7 +1951,7 @@
   },
   "OpsiAshAssist": {
     "_info": {
-      "name": "余烬信标支援",
+      "name": "信标支援",
       "help": "打每天三次的信标支援"
     },
     "Tier": {
@@ -1658,9 +1968,15 @@
       "name": "使用坐标记录仪",
       "help": "每次进入仓库的时候，使用所有的使用坐标记录仪"
     },
-    "BuyActionPoint": {
-      "name": "买行动力",
-      "help": "用石油买行动力，行动力不足时，优先买行动力，再开箱子"
+    "BuyActionPointLimit": {
+      "name": "买行动力X次",
+      "help": "买行动力的最大次数",
+      "0": "不买",
+      "1": "1次 (1000油, 100行动力)",
+      "2": "2次 (2000油, 200行动力)",
+      "3": "3次 (4000油, 400行动力)",
+      "4": "4次 (6000油, 600行动力)",
+      "5": "5次 (10000油, 1000行动力)"
     },
     "OilLimit": {
       "name": "买行动力时，保留 X 点石油",
@@ -1670,9 +1986,9 @@
       "name": "任意舰船血量低于 X 后，回港修理",
       "help": "0.0 ~ 1.0"
     },
-    "BuyAkashiShop": {
-      "name": "买明石商店",
-      "help": ""
+    "DoRandomMapEvent": {
+      "name": "完成地图随机事件",
+      "help": "在自律寻敌完成后重新扫描一遍地图，购买明石商店，使用塞壬信息收集装置、使用塞壬探测装置、解锁两舰队机关"
     },
     "AkashiShopFilter": {
       "name": "商店过滤器",
@@ -1688,13 +2004,27 @@
       "name": "打余烬信标",
       "help": "信标数据满了之后打余烬信标，一直打直到打完"
     },
-    "EnsureFullyCollected": {
-      "name": "保证收集满每日200信标数据",
-      "help": "在收集满为前，暂时无视保留行动力设置，需要同时开启 \"短猫相接\""
+    "OneHitMode": {
+      "name": "一击即走",
+      "help": "对每个信标只出击一次，之后每半个小时呼叫支援\n在档案信标中不生效"
     },
     "RequestAssist": {
       "name": "呼叫支援",
       "help": "打信标之前，从好友、舰队、世界呼叫支援"
+    },
+    "EnsureFullyCollected": {
+      "name": "保证收集满每日200信标数据",
+      "help": "在收集满为前，暂时无视保留行动力设置，需要同时开启 \"短猫相接\""
+    }
+  },
+  "OpsiDossierBeacon": {
+    "_info": {
+      "name": "档案信标",
+      "help": ""
+    },
+    "Enable": {
+      "name": "打档案信标",
+      "help": ""
     }
   },
   "OpsiFleetFilter": {
@@ -1728,11 +2058,11 @@
   "OpsiExplore": {
     "_info": {
       "name": "大世界开荒",
-      "help": "每月月初开荒大世界的所有海域，不需要买战役信息记录仪（5000油道具）\n这个功能将每隔30分钟清理一个海域，以保证空域搜索冷却\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 确认大世界出击队伍"
+      "help": "每月月初开荒大世界的所有海域，不需要买战役信息记录仪（5000油道具）\n这个功能将每隔27分钟清理一个海域，以保证空域搜索冷却\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务"
     },
     "SpecialRadar": {
       "name": "已购买战役信息记录仪（5000油道具）",
-      "help": "战役信息记录仪并非必须购买的\n但是如果已经购买，可以勾选此选项\n能够省去30分钟的探索间隔，效率更高"
+      "help": "战役信息记录仪并非必须购买的\n未购买并使用时不可勾选"
     },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
@@ -1746,17 +2076,27 @@
   "OpsiShop": {
     "_info": {
       "name": "大世界商店",
-      "help": "使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "BuySupply": {
       "name": "购买港口商店",
       "help": "每月港口商店可购买商品是固定的，未购买的物品下次仍会出现，并阻塞高价值物品，因此需要购买全部"
     }
   },
+  "OpsiVoucher": {
+    "_info": {
+      "name": "兑换商店（每月白票商店）",
+      "help": "购买每月白票商店\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务"
+    },
+    "Filter": {
+      "name": "商店过滤器",
+      "help": "参考文档 https://github.com/LmeSzinc/AzurLaneAutoScript/wiki/reward_shop_filter_string"
+    }
+  },
   "OpsiDaily": {
     "_info": {
       "name": "大世界每日",
-      "help": "使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "DoMission": {
       "name": "做大世界每日",
@@ -1770,7 +2110,7 @@
   "OpsiObscure": {
     "_info": {
       "name": "隐秘海域",
-      "help": "每隔30分钟清理一个隐秘海域，以保证空域搜索冷却\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "每隔27分钟清理一个隐秘海域，以保证空域搜索冷却\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
@@ -1780,7 +2120,7 @@
   "OpsiAbyssal": {
     "_info": {
       "name": "深渊海域",
-      "help": "清理仓库中的深渊海域坐标\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "清理仓库中的深渊海域坐标\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
@@ -1790,7 +2130,7 @@
   "OpsiStronghold": {
     "_info": {
       "name": "塞壬要塞",
-      "help": "清理每周的塞壬要塞\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "清理每周的塞壬要塞\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "ForceRun": {
       "name": "无视运行间隔强制运行",
@@ -1800,11 +2140,11 @@
   "OpsiMeowfficerFarming": {
     "_info": {
       "name": "短猫相接",
-      "help": "按顺时针出击指定侵蚀等级的海域\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 完成大世界开荒或使用战役信息记录仪（5000油道具）"
+      "help": "按顺时针出击指定侵蚀等级的海域\n使用此功能前必须满足以下条件：\n- 通关大世界主线任务\n- 启用大世界开荒任务或使用战役信息记录仪（5000油道具）"
     },
     "ActionPointPreserve": {
       "name": "保留 X 点行动力",
-      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留 500 点行动力\n这个值将在大世界重置前3天自动减少至200点，并在最后一天自动减少至0点"
+      "help": "行动力低于 X 后停止，自动打开行动力箱子，X 包含箱子中的行动力，建议保留1000行动力给侵蚀1练级\n这个值将在大世界重置前3天自动减少至200点，如果启用侵蚀1练级则改为500点，并在最后一天自动减少至0点"
     },
     "HazardLevel": {
       "name": "侵蚀等级",
@@ -1818,6 +2158,19 @@
     "TargetZone": {
       "name": "指定海域",
       "help": "仅出击指定的海域，可以用来获取大世界成就星星\n支持海域ID、国服/国际服/日服/台服海域名称，例如 \"51\", \"NA海域东南E\", \"NA Ocean SE Sector E\"\n填入默认值0，或者删除数值即可取消指定"
+    }
+  },
+  "OpsiHazard1Leveling": {
+    "_info": {
+      "name": "侵蚀1练级",
+      "help": "警告：侵蚀1无法无限获取行动力，请不要为了运行侵蚀1关闭其他任务\n\n根据LmeSzinc最新的统计，侵蚀1产出的行动力略高于消耗，可以在大量获取经验的同时消耗作战补给凭证换取短猫收益\n推荐携带1艘预装填航母以获取最高的时均经验收益\n由于在商店购买行动力需要大量作战补给凭证，启用本功能后会自动启用短猫相接来补充"
+    },
+    "TargetZone": {
+      "name": "指定海域",
+      "help": "仅出击指定的海域，可以用来获取大世界成就星星或规避游戏BUG导致的无法刷新海域",
+      "0": "不指定",
+      "44": "44 | 西大陆架D",
+      "22": "22 | NA海域西南B"
     }
   },
   "Daemon": {
@@ -1838,6 +2191,10 @@
     "RepairShip": {
       "name": "靠近港口时自动修船",
       "help": "手动把队伍移动至港口后，Alas将帮助修船\n修理完成后需要在30秒内将队伍移出港口，否则将再次修船"
+    },
+    "SelectEnemy": {
+      "name": "清理附近的敌人和物资",
+      "help": "清理附近的敌人和物资，清理完后又会找到新的敌人或物资，这样通常能清理整个海域，如果有遗漏或者点击错误，需要手动解决"
     }
   },
   "Benchmark": {
@@ -1902,6 +2259,16 @@
       "help": "游戏被强制结束后自动登录游戏"
     }
   },
+  "Storage": {
+    "_info": {
+      "name": "任务状态",
+      "help": "存放任务内部状态，任务异常时可以手动清除"
+    },
+    "Storage": {
+      "name": "Storage.Storage.name",
+      "help": "Storage.Storage.help"
+    }
+  },
   "Gui": {
     "Aside": {
       "Install": "安装",
@@ -1941,7 +2308,9 @@
     "MenuDevelop": {
       "HomePage": "主页",
       "Translate": "翻译",
-      "Update": "更新器"
+      "Update": "更新器",
+      "Remote": "远程控制",
+      "Utils": "工具"
     },
     "Overview": {
       "Scheduler": "调度器",
@@ -1956,16 +2325,17 @@
       "NewName": "新的配置文件名",
       "CopyFrom": "从现有的配置中复制",
       "Confirm": "添加",
-      "FileExist": "存在同名的配置文件，请重新输入一个"
+      "FileExist": "存在同名的配置文件，请重新输入一个",
+      "InvalidChar": "配置文件名不能包含下列任何字符：.\\/:*?\"<>|"
     },
     "Update": {
       "UpToDate": "已是最新版本",
       "HaveUpdate": "有新版本可用",
-      "UpdateFailed": "更新失败，可在./log/*_gui.txt中找到错误日志",
       "UpdateStart": "开始更新",
       "UpdateWait": "等待所有 Alas 完成当前任务",
       "UpdateRun": "更新中",
       "UpdateSuccess": "更新成功，正在重启",
+      "UpdateFailed": "更新失败，可在./log/*_gui.txt中找到错误日志",
       "UpdateChecking": "检查更新中",
       "UpdateCancel": "取消更新，重启 Alas 中",
       "UpdateFinish": "更新成功，请手动重启",
@@ -1974,10 +2344,20 @@
       "Author": "作者",
       "Time": "提交时间",
       "Message": "提交信息",
-      "DisabledWarn": "更新模块未启用，你需要手动重启 Alas 进行更新"
+      "DisabledWarn": "更新模块未启用，你需要手动重启 Alas 进行更新",
+      "DetailedHistory": "详细提交历史"
+    },
+    "Remote": {
+      "Running": "运行中",
+      "NotRunning": "未运行，与服务器的连接断开或服务器离线",
+      "NotEnable": "未启用，在 deploy.yaml 中设置 webui 密码并启用远程控制",
+      "EntryPoint": "远程访问 url 地址:",
+      "ConfigureHint": "配置教程：",
+      "SSHNotInstall": "系统中没有 ssh 工具，请参考教程下载或安装 ssh"
     },
     "Text": {
-      "InvalidFeedBack": "格式错误。 示例：{0}"
+      "InvalidFeedBack": "格式错误。 示例：{0}",
+      "Clear": "清除"
     }
   }
 }

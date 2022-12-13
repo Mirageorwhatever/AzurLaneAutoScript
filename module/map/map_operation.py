@@ -1,6 +1,5 @@
 from module.base.timer import Timer
-from module.exception import CampaignEnd
-from module.exception import ScriptEnd, RequestHumanTakeover
+from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
 from module.handler.fast_forward import FastForwardHandler
 from module.handler.mystery import MysteryHandler
 from module.logger import logger
@@ -63,12 +62,24 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             bool: If switched.
         """
         logger.info(f'Fleet set to {index}')
+        timeout = Timer(5, count=10).start()
         count = 0
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
             else:
                 self.device.screenshot()
+
+            if timeout.reached():
+                logger.warning('Fleet set timeout, assume current fleet is correct')
+                break
+
+            if self.handle_story_skip():
+                timeout.reset()
+                continue
+            if self.handle_in_stage():
+                timeout.reset()
+                continue
 
             self.get_fleet_show_index()
             self.get_fleet_current_index()
@@ -78,6 +89,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             elif self.appear_then_click(SWITCH_OVER):
                 count += 1
                 self.device.sleep((1, 1.5))
+                timeout.reset()
                 continue
             else:
                 logger.warning('SWITCH_OVER not found')
@@ -104,7 +116,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
         self.stage_entrance = button
 
         with self.stat.new(
-                genre=self.config.campaign_name, save=self.config.DropRecord_SaveCombat, upload=False
+                genre=self.config.campaign_name, method=self.config.DropRecord_CombatRecord
         ) as drop:
             while 1:
                 if skip_first_screenshot:
@@ -237,10 +249,13 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
             return False
 
         percent = self.get_map_clear_percentage()
-        if percent > 0.95:
+        logger.attr('Map_clear_percentage', percent)
+        # Comment this because percentage starts from 100% and increase from 0% to actual value
+        # 2022.08.21 Still enable this when `percent` was raised from 0.
+        if percent > 0.95 and 0 <= self.map_clear_percentage_prev < 0.95:
             # map clear percentage 100%, exit directly
             return True
-        elif abs(percent - self.map_clear_percentage_prev) < 0.02:
+        if abs(percent - self.map_clear_percentage_prev) < 0.02:
             self.map_clear_percentage_prev = percent
             if self.map_clear_percentage_timer.reached():
                 return True
@@ -298,12 +313,7 @@ class MapOperation(MysteryHandler, FleetPreparation, Retirement, FastForwardHand
     def fleets_reversed(self):
         if not self.config.FLEET_2:
             return False
-
-        if self.map_is_auto_search:
-            return self.config.Fleet_AutoSearchFleetOrder in ['fleet1_boss_fleet2_mob', 'fleet1_standby_fleet2_all']
-        else:
-            # return (self.config.FLEET_2 != 0) and (self.config.FLEET_2 < self.config.FLEET_1)
-            return self.config.Fleet_FleetOrder in ['fleet1_boss_fleet2_mob', 'fleet1_standby_fleet2_all']
+        return self.config.Fleet_FleetOrder in ['fleet1_boss_fleet2_mob', 'fleet1_standby_fleet2_all']
 
     def handle_fleet_reverse(self):
         """

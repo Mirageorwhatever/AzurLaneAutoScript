@@ -1,20 +1,18 @@
 import copy
 import importlib
 import os
+import random
+import re
 
-from module.campaign.assets import *
 from module.campaign.campaign_base import CampaignBase
+from module.campaign.campaign_event import CampaignEvent
 from module.config.config import AzurLaneConfig
-from module.config.utils import deep_get
-from module.exception import RequestHumanTakeover, ScriptEnd, CampaignEnd
+from module.exception import CampaignEnd, RequestHumanTakeover, ScriptEnd
+from module.handler.fast_forward import map_files
 from module.logger import logger
-from module.ocr.ocr import Digit
-from module.ui.ui import UI
-
-OCR_OIL = Digit(OCR_OIL, name='OCR_OIL', letter=(247, 247, 247), threshold=128)
 
 
-class CampaignRun(UI):
+class CampaignRun(CampaignEvent):
     folder: str
     name: str
     stage: str
@@ -23,6 +21,7 @@ class CampaignRun(UI):
     campaign: CampaignBase
     run_count: int
     run_limit: int
+    is_stage_loop = False
 
     def load_campaign(self, name, folder='campaign_main'):
         """
@@ -48,11 +47,10 @@ class CampaignRun(UI):
             self.module = importlib.import_module('.' + name, f'campaign.{folder}')
         except ModuleNotFoundError:
             logger.warning(f'Map file not found: campaign.{folder}.{name}')
-            folder = f'./campaign/{folder}'
-            if not os.path.exists(folder):
-                logger.warning(f'Folder not exists: {folder}')
+            if not os.path.exists(f'./campaign/{folder}'):
+                logger.warning(f'Folder not exists: ./campaign/{folder}')
             else:
-                files = [f[:-3] for f in os.listdir(folder) if f[-3:] == '.py']
+                files = map_files(folder)
                 logger.warning(f'Existing files: {files}')
 
             logger.critical(f'Possible reason #1: This event ({folder}) does not have {name}')
@@ -83,8 +81,8 @@ class CampaignRun(UI):
             self.config.Scheduler_Enable = False
             return True
         # Oil limit
-        if oil_check and self.config.StopCondition_OilLimit:
-            if OCR_OIL.ocr(self.device.image) < self.config.StopCondition_OilLimit:
+        if oil_check:
+            if self.get_oil() < max(500, self.config.StopCondition_OilLimit):
                 logger.hr('Triggered stop condition: Oil limit')
                 self.config.task_delay(minute=(120, 240))
                 return True
@@ -125,8 +123,7 @@ class CampaignRun(UI):
 
         return False
 
-    @staticmethod
-    def handle_stage_name(name, folder):
+    def handle_stage_name(self, name, folder):
         """
         Handle wrong stage names.
         In some events, the name of SP may be different, such as 'vsp', muse sp.
@@ -139,7 +136,8 @@ class CampaignRun(UI):
         Returns:
             str, str: name, folder
         """
-        name = name.lower()
+        name = re.sub('[ \t\n]', '', str(name)).lower()
+        # Handle special names SP maps
         if name[0].isdigit():
             name = 'campaign_' + name.lower().replace('-', '_')
         if folder == 'event_20201126_cn' and name == 'vsp':
@@ -148,8 +146,68 @@ class CampaignRun(UI):
             name = 'sp'
         if folder == 'event_20220324_cn' and name == 'esp':
             name = 'sp'
+        if folder == 'event_20220818_cn' and name == 'esp':
+            name = 'sp'
+        if folder == 'event_20221124_cn' and name in ['asp', 'a.sp']:
+            name = 'sp'
+        # Convert between A/B/C/D and T/HT
+        convert = {
+            'a1': 't1',
+            'a2': 't2',
+            'a3': 't3',
+            'b1': 't4',
+            'b2': 't5',
+            'b3': 't6',
+            'c1': 'ht1',
+            'c2': 'ht2',
+            'c3': 'ht3',
+            'd1': 'ht4',
+            'd2': 'ht5',
+            'd3': 'ht6',
+        }
+        if folder in ['event_20200917_cn', 'event_20221124_cn']:
+            name = convert.get(name, name)
+        else:
+            reverse = {v: k for k, v in convert.items()}
+            name = reverse.get(name, name)
+        # The Alchemist and the Archipelago of Secrets
+        # Handle typo
+        if folder == 'event_20221124_cn':
+            name = name.replace('ht', 'th')
+        # Chapter TH has no map_percentage and no 3_stars
+        if folder == 'event_20221124_cn' and name.startswith('th'):
+            if self.config.StopCondition_MapAchievement != 'non_stop':
+                logger.info(f'When running chapter TH of event_20221124_cn, '
+                            f'StopCondition.MapAchievement is forced set to threat_safe')
+                self.config.override(StopCondition_MapAchievement='threat_safe')
+        # Stage loop
+        for alias, stages in self.config.STAGE_LOOP_ALIAS.items():
+            alias_folder, alias = alias
+            if folder == alias_folder and name == alias.lower():
+                stages = [i.strip(' \t\r\n') for i in stages.split('>')]
+                cycle = len(stages)
+                count = int(self.config.StopCondition_RunCount)
+                if count == 0:
+                    stage = random.choice(stages)
+                    logger.info(f'Loop stages in {name.upper()}, run random stage: {stage}')
+                else:
+                    index = count % cycle
+                    index = 0 if index == 0 else cycle - index
+                    stage = stages[index]
+                    logger.info(f'Loop stages in {name.upper()} with remain run_count={count}, '
+                                f'run ordered stage: {stage}')
+                name = stage.lower()
+                self.is_stage_loop = True
 
         return name, folder
+
+    def can_use_auto_search_continue(self):
+        # Cannot update map info in auto search menu
+        # Close it if map achievement is set
+        if self.config.StopCondition_MapAchievement != 'non_stop':
+            return False
+
+        return self.run_count > 0 and self.campaign.map_is_auto_search
 
     def handle_commission_notice(self):
         """
@@ -162,11 +220,10 @@ class CampaignRun(UI):
         Pages:
             in: page_campaign
         """
-        if deep_get(self.config.data, keys='Commission.Scheduler.Enable', default=False):
-            if self.campaign.commission_notice_show_at_campaign():
-                logger.info('Commission notice found')
-                self.config.task_call('Commission')
-                self.config.task_stop('Commission notice found')
+        if self.campaign.commission_notice_show_at_campaign():
+            logger.info('Commission notice found')
+            self.config.task_call('Commission', force_call=True)
+            self.config.task_stop('Commission notice found')
 
     def run(self, name, folder='campaign_main', mode='normal', total=0):
         """
@@ -195,6 +252,7 @@ class CampaignRun(UI):
                 logger.info(f'Count: {self.run_count}')
 
             # UI ensure
+            self.device.click_record_clear()
             if not hasattr(self.device, 'image') or self.device.image is None:
                 self.device.screenshot()
             self.campaign.device.image = self.device.image
@@ -206,7 +264,7 @@ class CampaignRun(UI):
                     pass
                 self.campaign.ensure_campaign_ui(name=self.stage, mode=mode)
             elif self.campaign.is_in_auto_search_menu():
-                if self.run_count > 0 and self.campaign.map_is_auto_search:
+                if self.can_use_auto_search_continue():
                     logger.info('In auto search menu, skip ensure_campaign_ui.')
                 else:
                     logger.info('In auto search menu, closing.')
@@ -240,6 +298,14 @@ class CampaignRun(UI):
                 if self.run_count >= 1:
                     logger.hr('Triggered one-time stage limit')
                     self.campaign.handle_map_stop()
+                    break
+            # Task balancer
+            if self.run_count >= 1:
+                self.handle_task_balancer()
+            # Loop stages
+            if self.is_stage_loop:
+                if self.run_count >= 1:
+                    logger.hr('Triggered loop stage switch')
                     break
             # Scheduler
             if self.config.task_switched():

@@ -84,8 +84,8 @@ def random_rectangle_vector_opted(
     vector = np.array(vector) + random_rectangle_point(random_range)
     vector = np.round(vector).astype(np.int)
     half_vector = np.round(vector / 2).astype(np.int)
-    box = np.array(box) + np.append(np.abs(half_vector) + padding, -np.abs(half_vector) - padding)
-    box = area_offset(box, half_vector)
+    box_pad = np.array(box) + np.append(np.abs(half_vector) + padding, -np.abs(half_vector) - padding)
+    box_pad = area_offset(box_pad, half_vector)
     segment = int(np.linalg.norm(vector) // 70) + 1
 
     def in_blacklist(end):
@@ -100,22 +100,22 @@ def random_rectangle_vector_opted(
 
     if whitelist_area:
         for area in whitelist_area:
-            area = area_limit(area, box)
+            area = area_limit(area, box_pad)
             if all([x > 0 for x in area_size(area)]):
                 end_point = random_rectangle_point(area)
                 for _ in range(10):
                     if in_blacklist(end_point):
                         continue
-                    return tuple(end_point - vector), tuple(end_point)
+                    return point_limit(end_point - vector, box), point_limit(end_point, box)
 
     for _ in range(100):
-        end_point = random_rectangle_point(box)
+        end_point = random_rectangle_point(box_pad)
         if in_blacklist(end_point):
             continue
-        return tuple(end_point - vector), tuple(end_point)
+        return point_limit(end_point - vector, box), point_limit(end_point, box)
 
-    end_point = random_rectangle_point(box)
-    return tuple(end_point - vector), tuple(end_point)
+    end_point = random_rectangle_point(box_pad)
+    return point_limit(end_point - vector, box), point_limit(end_point, box)
 
 
 def random_line_segments(p1, p2, n, random_range=(0, 0, 0, 0)):
@@ -652,6 +652,33 @@ def color_mapping(image, max_multiply=2):
     image[image > 255] = 255
     image[image < 0] = 0
     return image.astype(np.uint8)
+
+
+def image_left_strip(image, threshold, length):
+    """
+    In `DAILY:200/200` strip `DAILY:` and leave `200/200`
+
+    Args:
+        image (np.ndarray): (height, width)
+        threshold (int):
+            0-255
+            The first column with brightness lower than this
+            will be considered as left edge.
+        length (int):
+            Strip this length of image after the left edge
+
+    Returns:
+        np.ndarray:
+    """
+    brightness = np.mean(image, axis=0)
+    match = np.where(brightness < threshold)[0]
+
+    if len(match):
+        left = match[0] + length
+        total = image.shape[1]
+        if left < total:
+            image = image[:, left:]
+    return image
 
 
 def red_overlay_transparency(color1, color2, red=247):

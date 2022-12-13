@@ -1,7 +1,9 @@
-from module.base.button import ButtonGrid
 from module.base.base import ModuleBase
-from module.logger import logger
+from module.base.button import ButtonGrid
 from module.base.timer import Timer
+from module.combat.assets import GET_ITEMS_1, GET_ITEMS_2, GET_SHIP
+from module.logger import logger
+from module.shop.assets import SHOP_CLICK_SAFE_AREA
 
 
 class Navbar:
@@ -47,7 +49,7 @@ class Navbar:
                 total.append(index)
 
         if len(active) == 0:
-            logger.warning(f'No active nav item found in {self.name}')
+            # logger.warning(f'No active nav item found in {self.name}')
             active = None
         elif len(active) == 1:
             active = active[0]
@@ -84,6 +86,35 @@ class Navbar:
         """
         _, left, right = self.get_info(main=main)
         return right - left + 1
+
+    def _shop_obstruct_handle(self, main):
+        """
+        IFF in shop, then remove obstructions
+        in shop view if any
+
+        Args:
+            main (ModuleBase):
+
+        Returns:
+            bool:
+        """
+        # Check name, identifies if NavBar
+        # instance belongs to shop module
+        if self.name not in ['SHOP_BOTTOM_NAVBAR', 'GUILD_SIDE_NAVBAR']:
+            return False
+
+        # Handle shop obstructions
+        if main.appear(GET_SHIP, interval=1):
+            main.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        if main.appear(GET_ITEMS_1, offset=(30, 30), interval=1):
+            main.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+        if main.appear(GET_ITEMS_2, offset=(30, 30), interval=1):
+            main.device.click(SHOP_CLICK_SAFE_AREA)
+            return True
+
+        return False
 
     def set(self, main, left=None, right=None, upper=None, bottom=None, skip_first_screenshot=True):
         """
@@ -125,9 +156,15 @@ class Navbar:
                 logger.warning(f'{self.name} failed to set {text.strip()}')
                 return False
 
-            active, minimum, maximum = self.get_info(main=main)
-            if active is None:
+            if self._shop_obstruct_handle(main=main):
+                interval.reset()
+                timeout.reset()
                 continue
+
+            active, minimum, maximum = self.get_info(main=main)
+            logger.info(f'Nav item active: {active} from range ({minimum}, {maximum})')
+            # if active is None:
+            #     continue
             index = minimum + left - 1 if left is not None else maximum - right + 1
             if not minimum <= index <= maximum:
                 logger.warning(

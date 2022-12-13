@@ -6,12 +6,13 @@ from typing import TYPE_CHECKING
 from module.base.button import Button
 from module.base.utils import *
 from module.logger import logger
-from module.ocr.rpc import ModelProxyFactory, deploy_config
+from module.ocr.rpc import ModelProxyFactory
+from module.webui.setting import State
 
 if TYPE_CHECKING:
     from module.ocr.al_ocr import AlOcr
 
-if not deploy_config.bool("UseOcrServer"):
+if not State.deploy_config.UseOcrServer:
     from module.ocr.models import OCR_MODEL
 else:
     OCR_MODEL = ModelProxyFactory()
@@ -57,17 +58,11 @@ class Ocr:
     def after_process(self, result):
         """
         Args:
-            result (list[str]): ['第', '二', '行']
+            result (str): '第二行'
 
         Returns:
             str:
         """
-        result = ''.join(result)
-
-        if self.lang == 'tw':
-            # There no letter `艦` in training dataset
-            result = result.replace('鑑', '艦')
-
         return result
 
     def ocr(self, image, direct_ocr=False):
@@ -91,6 +86,7 @@ class Ocr:
         # self.cnocr.debug(image_list)
 
         result_list = self.cnocr.ocr_for_single_lines(image_list)
+        result_list = [''.join(result) for result in result_list]
         result_list = [self.after_process(result) for result in result_list]
 
         if len(self.buttons) == 1:
@@ -108,26 +104,36 @@ class Digit(Ocr):
     Method ocr() returns int, or a list of int.
     """
 
-    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789',
+    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789IDS',
                  name=None):
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
         result = super().after_process(result)
+        result = result.replace('I', '1').replace('D', '0').replace('S', '5')
+
+        prev = result
         result = int(result) if result else 0
+        if str(result) != prev:
+            logger.warning(f'OCR {self.name}: Result "{prev}" is revised to "{result}"')
 
         return result
 
 
 class DigitCounter(Ocr):
-    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789/',
+    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789/IDS',
                  name=None):
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
+
+    def after_process(self, result):
+        result = super().after_process(result)
+        result = result.replace('I', '1').replace('D', '0').replace('S', '5')
+        return result
 
     def ocr(self, image, direct_ocr=False):
         """
         DigitCounter only support doing OCR on one button.
-        Do OCR on a counter, such as `14/15`.
+        Do OCR on a counter, such as `14/15`, and returns 14, 1, 15
 
         Args:
             image:
@@ -139,24 +145,25 @@ class DigitCounter(Ocr):
         result_list = super().ocr(image, direct_ocr=direct_ocr)
         result = result_list[0] if isinstance(result_list, list) else result_list
 
-        try:
-            current, total = result.split('/')
-            current, total = int(current), int(total)
+        result = re.search(r'(\d+)/(\d+)', result)
+        if result:
+            result = [int(s) for s in result.groups()]
+            current, total = int(result[0]), int(result[1])
             current = min(current, total)
             return current, total - current, total
-        except (IndexError, ValueError):
+        else:
             logger.warning(f'Unexpected ocr result: {result_list}')
             return 0, 0, 0
 
 
 class Duration(Ocr):
-    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789:',
+    def __init__(self, buttons, lang='azur_lane', letter=(255, 255, 255), threshold=128, alphabet='0123456789:IDS',
                  name=None):
         super().__init__(buttons, lang=lang, letter=letter, threshold=threshold, alphabet=alphabet, name=name)
 
     def after_process(self, result):
         result = super().after_process(result)
-        result = result.replace('D', '0')  # Poor OCR
+        result = result.replace('I', '1').replace('D', '0').replace('S', '5')
         return result
 
     def ocr(self, image, direct_ocr=False):
@@ -178,7 +185,8 @@ class Duration(Ocr):
             result_list = result_list[0]
         return result_list
 
-    def parse_time(self, string):
+    @staticmethod
+    def parse_time(string):
         """
         Args:
             string (str): `01:30:00`
@@ -186,7 +194,7 @@ class Duration(Ocr):
         Returns:
             datetime.timedelta:
         """
-        result = re.search('(\d+):(\d+):(\d+)', string)
+        result = re.search(r'(\d{1,2}):?(\d{2}):?(\d{2})', string)
         if result:
             result = [int(s) for s in result.groups()]
             return timedelta(hours=result[0], minutes=result[1], seconds=result[2])

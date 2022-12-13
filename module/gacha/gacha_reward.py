@@ -1,8 +1,9 @@
 from module.base.timer import Timer
 from module.combat.assets import GET_SHIP
+from module.exception import ScriptError
 from module.gacha.assets import *
 from module.gacha.ui import GachaUI
-from module.handler.assets import STORY_SKIP, POPUP_CONFIRM
+from module.handler.assets import POPUP_CONFIRM, STORY_SKIP
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.retire.retirement import Retirement
@@ -11,20 +12,22 @@ from module.shop.shop_general import GeneralShop
 RECORD_GACHA_OPTION = ('RewardRecord', 'gacha')
 RECORD_GACHA_SINCE = (0,)
 OCR_BUILD_CUBE_COUNT = Digit(BUILD_CUBE_COUNT, letter=(255, 247, 247), threshold=64)
+OCR_BUILD_TICKET_COUNT = Digit(BUILD_TICKET_COUNT, letter=(255, 247, 247), threshold=64)
 OCR_BUILD_SUBMIT_COUNT = Digit(BUILD_SUBMIT_COUNT, letter=(255, 247, 247), threshold=64)
 OCR_BUILD_SUBMIT_WW_COUNT = Digit(BUILD_SUBMIT_WW_COUNT, letter=(255, 247, 247), threshold=64)
 
 
 class RewardGacha(GachaUI, GeneralShop, Retirement):
     build_cube_count = 0
+    build_ticket_count = 0
 
-    def gacha_prep(self, target, skip_first_scrrenshot=True):
+    def gacha_prep(self, target, skip_first_screenshot=True):
         """
         Initiate preparation to submit build orders.
 
         Args:
             target (int): Number of build orders to submit
-            skip_first_scrrenshot (bool):
+            skip_first_screenshot (bool):
 
         Returns:
             bool: True if prep complete otherwise False.
@@ -51,8 +54,8 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
         ocr_submit = None
         index_offset = (60, 20)
         while 1:
-            if skip_first_scrrenshot:
-                skip_first_scrrenshot = False
+            if skip_first_screenshot:
+                skip_first_screenshot = False
             else:
                 self.device.screenshot()
 
@@ -75,9 +78,8 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
         # Check for exception, exited prematurely
         # Apply appropriate submission count
         if ocr_submit is None:
-            logger.error('Failed to identify ocr asset required, '
-                         'cannot continue prep work')
-            exit(1)
+            raise ScriptError('Failed to identify ocr asset required, '
+                              'cannot continue prep work')
         area = ocr_submit.buttons[0]
         ocr_submit.buttons = [(BUILD_MINUS.button[2] + 3, area[1], BUILD_PLUS.button[0] - 3, area[3])]
         self.ui_ensure_index(target, letter=ocr_submit, prev_button=BUILD_MINUS,
@@ -108,7 +110,7 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
                 break
 
             # Insufficient resources, reduce by 1 and re-calculate
-            if gold_total > self._shop_gold_coins or cube_total > self.build_cube_count:
+            if gold_total > self._currency or cube_total > self.build_cube_count:
                 target_count -= 1
                 continue
 
@@ -116,7 +118,7 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
 
         # Modify resources, return current 'target_count'
         logger.info(f'Able to submit up to {target_count} build orders')
-        self._shop_gold_coins -= gold_total
+        self._currency -= gold_total
         self.build_cube_count -= cube_total
         return target_count
 
@@ -152,13 +154,12 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
             else:
                 self.gacha_side_navbar_ensure(upper=2)
                 if self.appear(BUILD_WW_CHECK):
-                    logger.error('\'wishing_well\' must be configured '
-                                 'manually by user, cannot continue '
-                                 'gacha_goto_pool')
-                    exit(1)
+                    raise ScriptError('\'wishing_well\' must be configured '
+                                      'manually by user, cannot continue '
+                                      'gacha_goto_pool')
         elif target_pool == 'event':
             gacha_bottom_navbar = self._gacha_bottom_navbar(is_build=True)
-            if gacha_bottom_navbar.get_total == 3:
+            if gacha_bottom_navbar.get_total(main=self) == 3:
                 logger.warning('\'event\' is not available, default '
                                'to \'light\' pool')
                 target_pool = 'light'
@@ -229,7 +230,7 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
                 continue
 
             # End, goes back to pool page if clicked with queue empty
-            if self.appear(BUILD_SUBMIT_ORDERS):
+            if self.appear(BUILD_SUBMIT_ORDERS) or self.appear(BUILD_SUBMIT_WW_ORDERS):
                 if confirm_timer.reached():
                     break
 
@@ -292,22 +293,32 @@ class RewardGacha(GachaUI, GeneralShop, Retirement):
             gold_cost = 1500
             cube_cost = 2
 
-        # Calculate rolls allowed based on
-        # configurations and resources
-        buy_count = self.gacha_calculate(self.config.Gacha_Amount, gold_cost, cube_cost)
+        # OCR build tickets, decide use cubes/coins or not
+        # buy = [rolls_using_tickets, rolls_using_cubes]
+        buy = [self.config.Gacha_Amount, 0]
+        if actual_pool == "event" and self.config.Gacha_UseTicket:
+            if self.appear(BUILD_TICKET_CHECK, offset=(30, 30)):
+                self.build_ticket_count = OCR_BUILD_TICKET_COUNT.ocr(self.device.image)
+            else:
+                logger.info('Build ticket not detected, use cubes and coins')
+        if self.config.Gacha_Amount > self.build_ticket_count:
+            buy[0] = self.build_ticket_count
+            # Calculate rolls allowed based on configurations and resources
+            buy[1] = self.gacha_calculate(self.config.Gacha_Amount-self.build_ticket_count, gold_cost, cube_cost)
 
         # Submit 'buy_count' and execute if capable
         # Cannot use handle_popup_confirm, this window
         # lacks POPUP_CANCEL
         result = False
-        if self.gacha_prep(buy_count):
-            self.gacha_submit()
+        for buy_count in buy:
+            if self.gacha_prep(buy_count):
+                self.gacha_submit()
 
-            # If configured to use drill after build
-            if self.config.Gacha_UseDrill:
-                self.gacha_flush_queue()
-
-            result = True
+                # If configured to use drill after build
+                if self.config.Gacha_UseDrill:
+                    self.gacha_flush_queue()
+                # Return True if any submit successed
+                result = True
 
         return result
 

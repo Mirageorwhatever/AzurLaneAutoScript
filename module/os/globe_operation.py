@@ -1,9 +1,9 @@
 from module.base.timer import Timer
 from module.base.utils import *
-from module.exception import GameTooManyClickError
 from module.logger import logger
 from module.os.assets import *
 from module.os_handler.action_point import ActionPointHandler
+from module.os_handler.assets import AUTO_SEARCH_REWARD
 from module.os_handler.map_event import MapEventHandler
 
 ZONE_TYPES = [ZONE_DANGEROUS, ZONE_SAFE, ZONE_OBSCURE, ZONE_ABYSSAL, ZONE_STRONGHOLD, ZONE_ARCHIVE]
@@ -12,6 +12,10 @@ ASSETS_PINNED_ZONE = ZONE_TYPES + [ZONE_ENTRANCE, ZONE_SWITCH, ZONE_PINNED]
 
 
 class OSExploreError(Exception):
+    pass
+
+
+class RewardUncollectedError(Exception):
     pass
 
 
@@ -124,13 +128,17 @@ class GlobeOperation(ActionPointHandler, MapEventHandler):
         return self.appear(ZONE_SWITCH, offset=(5, 5))
 
     _zone_select_offset = (20, 200)
+    _zone_select_similarity = 0.75
 
     def get_zone_select(self):
         """
         Returns:
             list[Button]:
         """
-        return [select for select in ZONE_SELECT if self.appear(select, offset=self._zone_select_offset)]
+        # Lower threshold to 0.75
+        # Don't know why buy but fonts are different sometimes
+        return [select for select in ZONE_SELECT if
+                self.appear(select, offset=self._zone_select_offset, threshold=self._zone_select_similarity)]
 
     def is_in_zone_select(self):
         """
@@ -174,7 +182,11 @@ class GlobeOperation(ActionPointHandler, MapEventHandler):
             in: is_in_zone_select
             out: is_zone_pinned
         """
-        self.ui_click(button, check_button=self.is_zone_pinned, offset=self._zone_select_offset,
+
+        def appear():
+            return self.appear(button, offset=self._zone_select_offset, threshold=self._zone_select_similarity)
+
+        self.ui_click(button, appear_button=appear, check_button=self.is_zone_pinned,
                       skip_first_screenshot=True)
 
     def zone_type_select(self, types=('SAFE', 'DANGEROUS')):
@@ -260,8 +272,8 @@ class GlobeOperation(ActionPointHandler, MapEventHandler):
             in: is_in_globe
             out: is_in_map
         """
-        return self.ui_click(GLOBE_GOTO_MAP, check_button=self.is_in_map, offset=(200, 5),
-                             skip_first_screenshot=skip_first_screenshot)
+        return self.ui_click(GLOBE_GOTO_MAP, check_button=self.is_in_map, offset=(20, 20),
+                             retry_wait=3, skip_first_screenshot=skip_first_screenshot)
 
     def os_map_goto_globe(self, unpin=True, skip_first_screenshot=True):
         """
@@ -281,16 +293,28 @@ class GlobeOperation(ActionPointHandler, MapEventHandler):
                 self.device.screenshot()
 
             if self.appear_then_click(MAP_GOTO_GLOBE, offset=(200, 5), interval=5):
+                # Just to initialize interval timer of MAP_GOTO_GLOBE_FOG
+                self.appear(MAP_GOTO_GLOBE_FOG, offset=(5, 5), interval=5)
+                self.interval_reset(MAP_GOTO_GLOBE_FOG)
                 click_count += 1
                 if click_count >= 5:
                     # When there's zone exploration reward, AL just don't let you go.
                     logger.warning('Unable to goto globe, '
                                    'there might be uncollected zone exploration rewards preventing exit')
-                    raise GameTooManyClickError(f'Too many click for a button: {MAP_GOTO_GLOBE}')
+                    raise RewardUncollectedError
+                continue
+            if self.appear_then_click(MAP_GOTO_GLOBE_FOG, offset=(5, 5), interval=5):
+                # Encountered only in strongholds; AL will not prevent
+                # zone exit even with left over exploration rewards in map
+                self.interval_reset(MAP_GOTO_GLOBE)
                 continue
             if self.handle_map_event():
                 continue
+            # Popup: AUTO_SEARCH_REWARD appears slowly
+            if self.appear_then_click(AUTO_SEARCH_REWARD, offset=(50, 50), interval=5):
+                continue
             # Popup: Leaving current zone will terminate meowfficer searching.
+            # Popup: Leaving current zone will retreat submarines
             # Searching reward will be shown after entering another zone.
             if self.handle_popup_confirm('GOTO_GLOBE'):
                 continue

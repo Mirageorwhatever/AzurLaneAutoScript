@@ -1,10 +1,10 @@
 from module.base.timer import Timer
 from module.combat.assets import GET_ITEMS_1
 from module.config.utils import get_server_next_update
+from module.logger import logger
 from module.meowfficer.assets import *
 from module.ui.assets import MEOWFFICER_CHECK, MEOWFFICER_INFO
 from module.ui.ui import UI
-from module.logger import logger
 
 
 class MeowfficerBase(UI):
@@ -20,6 +20,37 @@ class MeowfficerBase(UI):
             return True
 
         return False
+
+    def meow_enter(self, click_button, check_button, skip_first_screenshot=True):
+        """
+        Enters sub-page, handle MEOWFFICER_INFO and mistaken clicks
+
+        Pages:
+            in: page_meowfficer
+            out: check_button
+        """
+        accident_page = [MEOWFFICER_TRAIN_START, MEOWFFICER_BUY, MEOWFFICER_FORT_CHECK]
+        accident_page = [page for page in accident_page if page != check_button]
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # End
+            if self.appear(check_button, offset=(20, 20)):
+                break
+            # Click
+            if self.appear_then_click(click_button, offset=(20, 20), interval=3):
+                continue
+            # Accident click
+            if self.meow_additional():
+                continue
+            for button in accident_page:
+                if self.appear(button, offset=(20, 20), interval=3):
+                    self.device.click(MEOWFFICER_CHECK)
+                    self.interval_clear(click_button)
+                    break
 
     def meow_menu_close(self, skip_first_screenshot=True):
         """
@@ -77,6 +108,9 @@ class MeowfficerBase(UI):
                 click_timer.reset()
                 continue
             if self.appear_then_click(GET_ITEMS_1, offset=5, interval=3):
+                click_timer.reset()
+                continue
+            if self.meow_additional():
                 click_timer.reset()
                 continue
 

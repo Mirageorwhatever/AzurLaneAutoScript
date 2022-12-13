@@ -82,9 +82,8 @@ class MetaReward(Combat, UI):
                 continue
 
             # End
-            if self.appear(REWARD_CHECK, offset=(20, 20)) and not (
-                    self.appear(REWARD_RECEIVE, offset=(20, 20)) and REWARD_RECEIVE.match_appear_on(self.device.image)
-            ):
+            if self.appear(REWARD_CHECK, offset=(20, 20)) and \
+               self.image_color_count(REWARD_RECEIVE, color=(49, 52, 49), threshold=221, count=400):
                 if confirm_timer.reached():
                     break
             else:
@@ -94,10 +93,14 @@ class MetaReward(Combat, UI):
         return received
 
     def run(self):
+        if self.config.SERVER in ['cn', 'en', 'jp']:
+            pass
+        else:
+            logger.info(f'MetaReward is not supported in {self.config.SERVER}, please contact server maintainers')
+            return
+
         self.ui_ensure(page_meta)
 
         if self.meta_reward_notice_appear():
             self.meta_reward_enter()
             self.meta_reward_receive()
-
-        self.config.task_delay(server_update=True)

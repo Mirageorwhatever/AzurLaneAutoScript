@@ -1,11 +1,9 @@
 import numpy as np
 
-from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.combat.assets import *
 from module.combat.combat_auto import CombatAuto
 from module.combat.combat_manual import CombatManual
-from module.combat.emotion import Emotion
 from module.combat.hp_balancer import HPBalancer
 from module.combat.level import Level
 from module.combat.submarine import SubmarineCall
@@ -15,17 +13,12 @@ from module.map.assets import MAP_OFFENSIVE
 from module.retire.retirement import Retirement
 from module.statistics.azurstats import DropImage
 from module.template.assets import TEMPLATE_COMBAT_LOADING
-from module.ui.assets import BACK_ARROW
+from module.ui.assets import BACK_ARROW, MUNITIONS_CHECK
 
 
 class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatManual, AutoSearchHandler):
     _automation_set_timer = Timer(1)
     battle_status_click_interval = 0
-    emotion: Emotion
-
-    @cached_property
-    def emotion(self):
-        return Emotion(config=self.config)
 
     def combat_appear(self):
         """
@@ -91,8 +84,8 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         self.wait_until_stable(COMBAT_OIL_LOADING)
 
     def handle_combat_automation_confirm(self):
-        if self.appear(AUTOMATION_CONFIRM_CHECK, interval=1):
-            self.appear_then_click(AUTOMATION_CONFIRM, offset=True)
+        if self.appear(AUTOMATION_CONFIRM_CHECK, threshold=30, interval=1):
+            self.appear_then_click(AUTOMATION_CONFIRM, offset=(20, 20))
             return True
 
         return False
@@ -183,7 +176,7 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 self._automation_set_timer.reset()
                 return True
 
-        if self.appear_then_click(AUTOMATION_CONFIRM, offset=True):
+        if self.handle_combat_automation_confirm():
             self._automation_set_timer.reset()
             return True
 
@@ -230,14 +223,16 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         self.submarine_call_reset()
         self.combat_auto_reset()
         self.combat_manual_reset()
+        self.device.click_record_clear()
         confirm_timer = Timer(10)
         confirm_timer.start()
 
         while 1:
             self.device.screenshot()
 
-            if not confirm_timer.reached() and self.appear_then_click(AUTOMATION_CONFIRM, offset=True):
-                continue
+            if not confirm_timer.reached():
+                if self.handle_combat_automation_confirm():
+                    continue
 
             if self.handle_story_skip():
                 continue
@@ -385,6 +380,17 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
 
         return False
 
+    def handle_combat_mis_click(self):
+        """
+        Returns:
+            bool:
+        """
+        if self.appear(MUNITIONS_CHECK, offset=(20, 20), interval=2):
+            self.device.click(BACK_ARROW)
+            return True
+
+        return False
+
     def combat_status(self, drop=None, expected_end=None):
         """
         Args:
@@ -412,6 +418,8 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 if expected_end():
                     break
 
+            if self.handle_story_skip(drop=drop):
+                continue
             # Combat status
             if not exp_info and self.handle_get_ship(drop=drop):
                 continue
@@ -430,13 +438,15 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
                 continue
             if self.handle_urgent_commission(drop=drop):
                 continue
-            if self.handle_story_skip(drop=drop):
-                continue
             if self.handle_guild_popup_cancel():
                 continue
             if self.handle_vote_popup():
                 continue
+            if self.handle_mission_popup_ack():
+                continue
             if self.handle_auto_search_exit(drop=drop):
+                continue
+            if self.handle_combat_mis_click():
                 continue
 
             # End
@@ -475,7 +485,7 @@ class Combat(Level, HPBalancer, Retirement, SubmarineCall, CombatAuto, CombatMan
         #     self.emotion = Emotion(config=self.config)
 
         with self.stat.new(
-                genre=self.config.campaign_name, save=self.config.DropRecord_SaveCombat, upload=False
+                genre=self.config.campaign_name, method=self.config.DropRecord_CombatRecord
         ) as drop:
             if save_get_items is False:
                 drop = None

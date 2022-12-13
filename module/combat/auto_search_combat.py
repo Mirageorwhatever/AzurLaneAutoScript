@@ -1,17 +1,14 @@
 from module.base.timer import Timer
-from module.campaign.assets import OCR_OIL
+from module.campaign.campaign_status import CampaignStatus
 from module.combat.assets import *
 from module.combat.combat import Combat
 from module.exception import CampaignEnd
 from module.handler.assets import AUTO_SEARCH_MAP_OPTION_ON
 from module.logger import logger
 from module.map.map_operation import MapOperation
-from module.ocr.ocr import Digit
-
-OCR_OIL = Digit(OCR_OIL, name='OCR_OIL', letter=(247, 247, 247), threshold=128)
 
 
-class AutoSearchCombat(MapOperation, Combat):
+class AutoSearchCombat(MapOperation, Combat, CampaignStatus):
     _auto_search_in_stage_timer = Timer(3, count=6)
     _auto_search_status_confirm = False
     auto_search_oil_limit_triggered = False
@@ -55,7 +52,7 @@ class AutoSearchCombat(MapOperation, Combat):
             # when Alas exited from retirement and turned it on immediately.
             # Monkey clicker, disable auto search every 3s, beginning not included
             if self.appear(AUTO_SEARCH_MAP_OPTION_ON, offset=self._auto_search_offset, interval=3) \
-                   and self.appear_then_click(AUTO_SEARCH_MAP_OPTION_ON):
+                    and self.appear_then_click(AUTO_SEARCH_MAP_OPTION_ON):
                 continue
             if self.handle_combat_low_emotion():
                 continue
@@ -100,13 +97,18 @@ class AutoSearchCombat(MapOperation, Combat):
         This will set auto_search_oil_limit_triggered.
         """
         if not checked:
-            oil = OCR_OIL.ocr(self.device.image)
+            oil = self._get_oil()
             if oil == 0:
                 logger.warning('Oil not found')
             else:
-                if oil < self.config.StopCondition_OilLimit:
+                if oil < max(500, self.config.StopCondition_OilLimit):
                     logger.info('Reach oil limit')
                     self.auto_search_oil_limit_triggered = True
+                else:
+                    if self.auto_search_oil_limit_triggered:
+                        logger.warning('auto_search_oil_limit_triggered but oil recovered, '
+                                       'probably because of wrong OCR result before')
+                    self.auto_search_oil_limit_triggered = False
                 checked = True
 
         return checked
@@ -209,6 +211,7 @@ class AutoSearchCombat(MapOperation, Combat):
             submarine_mode = self.config.Submarine_Mode
         self.combat_auto_reset()
         self.combat_manual_reset()
+        self.device.click_record_clear()
         if emotion_reduce:
             self.emotion.reduce(fleet_index)
         auto = self.config.Fleet_Fleet1Mode if fleet_index == 1 else self.config.Fleet_Fleet2Mode
@@ -237,6 +240,8 @@ class AutoSearchCombat(MapOperation, Combat):
                 self.device.screenshot_interval_set()
                 raise CampaignEnd
             if self.is_combat_executing():
+                continue
+            if self.handle_get_ship():
                 continue
             if self.appear(BATTLE_STATUS_S) or self.appear(BATTLE_STATUS_A) or self.appear(BATTLE_STATUS_B) \
                     or self.appear(EXP_INFO_S) or self.appear(EXP_INFO_A) or self.appear(EXP_INFO_B) \
@@ -281,6 +286,8 @@ class AutoSearchCombat(MapOperation, Combat):
             if self.handle_guild_popup_cancel():
                 continue
             if self.handle_vote_popup():
+                continue
+            if self.handle_mission_popup_ack():
                 continue
 
             # Handle low emotion combat

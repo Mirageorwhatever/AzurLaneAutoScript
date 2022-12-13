@@ -2,20 +2,32 @@ import os
 
 import cv2
 import numpy as np
-from PIL import Image
 from cnocr import CnOcr
-from cnocr.cn_ocr import data_dir, read_charset, check_model_name, load_module, gen_network
+from cnocr.cn_ocr import (check_model_name, data_dir, gen_network, load_module,
+                          read_charset)
 from cnocr.fit.ctc_metrics import CtcMetrics
 from cnocr.hyperparams.cn_hyperparams import CnHyperparams as Hyperparams
+from PIL import Image
 
 from module.exception import RequestHumanTakeover
 from module.logger import logger
 
 
+def get_mxnet_context():
+    import re
+    import pkg_resources
+    for pkg in pkg_resources.working_set:
+        if re.match(r'^mxnet-cu\d+$', pkg.key):
+            logger.info(f'MXNet gpu package: {pkg.key}=={pkg.version} found, using it')
+            return 'gpu'
+
+    return 'cpu'
+
+
 class AlOcr(CnOcr):
     # 'cpu' or 'gpu'
     # To use predict in gpu, the gpu version of mxnet must be installed.
-    CNOCR_CONTEXT = 'cpu'
+    CNOCR_CONTEXT = get_mxnet_context()
 
     def __init__(
             self,
@@ -146,7 +158,7 @@ class AlOcr(CnOcr):
         """
         :param img: image array with type mx.nd.NDArray or np.ndarray,
         with shape [height, width] or [height, width, channel].
-        channel shoule be 1 (gray image) or 3 (color image).
+        channel should be 1 (gray image) or 3 (color image).
 
         :return: np.ndarray, with shape (1, height, width)
         """

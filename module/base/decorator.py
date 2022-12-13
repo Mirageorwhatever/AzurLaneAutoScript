@@ -2,8 +2,6 @@ import random
 import re
 from functools import wraps
 
-from module.logger import logger
-
 
 class Config:
     """
@@ -34,6 +32,7 @@ class Config:
             def retire_ships(self, amount=None, rarity=None):
                 pass
         """
+        from module.logger import logger
         options = kwargs
 
         def decorate(func):
@@ -95,6 +94,20 @@ class cached_property:
         return value
 
 
+def del_cached_property(obj, name):
+    """
+    Delete a cached property safely.
+
+    Args:
+        obj:
+        name (str):
+    """
+    try:
+        del obj.__dict__[name]
+    except KeyError:
+        pass
+
+
 def function_drop(rate=0.5, default=None):
     """
     Drop function calls to simulate random emulator stuck, for testing purpose.
@@ -113,6 +126,7 @@ def function_drop(rate=0.5, default=None):
         70% possibility:
         INFO | Click (1091,  628) @ REWARD_GOTO_MAIN
     """
+    from module.logger import logger
 
     def decorate(func):
         @wraps(func)

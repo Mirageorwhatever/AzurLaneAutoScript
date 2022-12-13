@@ -7,16 +7,18 @@
     ],
     "Farm": [
       "Main",
-      "C72MysteryFarming",
-      "C122MediumLeveling",
-      "C124LargeLeveling",
+      "Main2",
+      "Main3",
       "GemsFarming"
     ],
     "Event": [
       "EventGeneral",
       "Event",
-      "EventAb",
-      "EventCd",
+      "Event2",
+      "EventA",
+      "EventB",
+      "EventC",
+      "EventD",
       "EventSp",
       "Raid",
       "RaidDaily",
@@ -36,10 +38,7 @@
       "ShopOnce",
       "Shipyard",
       "Gacha",
-      "DataKey",
-      "SupplyPack",
-      "BattlePass",
-      "MetaReward"
+      "Freebies"
     ],
     "DailyMission": [
       "Daily",
@@ -50,14 +49,19 @@
     ],
     "Opsi": [
       "OpsiGeneral",
+      "OpsiAshBeacon",
       "OpsiAshAssist",
       "OpsiExplore",
       "OpsiShop",
+      "OpsiVoucher",
       "OpsiDaily",
       "OpsiObscure",
       "OpsiAbyssal",
+      "OpsiArchive",
       "OpsiStronghold",
-      "OpsiMeowfficerFarming"
+      "OpsiMeowfficerFarming",
+      "OpsiHazard1Leveling",
+      "OpsiCrossMonth"
     ],
     "Tool": [
       "Daemon",

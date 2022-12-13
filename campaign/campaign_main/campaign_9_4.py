@@ -1,7 +1,7 @@
 from module.campaign.campaign_base import CampaignBase
-from module.map.map_base import CampaignMap
-from module.map.map_grids import SelectedGrids, RoadGrids
 from module.logger import logger
+from module.map.map_base import CampaignMap
+from module.map.map_grids import RoadGrids, SelectedGrids
 
 MAP = CampaignMap('9-4')
 MAP.shape = 'I6'
@@ -73,6 +73,9 @@ class Campaign(CampaignBase):
         return self.battle_default()
 
     def battle_5(self):
+        if self.config.FLEET_BOSS == 1:
+            self.pick_up_ammo()
+
         boss = self.map.select(is_boss=True)
         if boss:
             if not self.check_accessibility(boss[0], fleet='boss'):

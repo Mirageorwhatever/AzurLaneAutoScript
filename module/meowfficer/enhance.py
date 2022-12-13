@@ -1,11 +1,12 @@
 from module.base.button import ButtonGrid
 from module.base.timer import Timer
+from module.handler.assets import GAME_TIPS
 from module.logger import logger
 from module.meowfficer.assets import *
 from module.meowfficer.base import MeowfficerBase
 from module.meowfficer.buy import MEOWFFICER_COINS
 from module.ocr.ocr import DigitCounter
-from module.ui.assets import MEOWFFICER_GOTO_DORM
+from module.ui.assets import MEOWFFICER_GOTO_DORMMENU
 from module.ui.page import page_meowfficer
 
 MEOWFFICER_SELECT_GRID = ButtonGrid(
@@ -61,7 +62,7 @@ class MeowfficerEnhance(MeowfficerBase):
         Scan for meowfficers that can be fed
         according to the MEOWFFICER_FEED_GRID (4x3)
         into target meowfficer for enhancement
-        Ensure through green check mark apperance
+        Ensure through green check mark appearance
         after click
 
         Pages:
@@ -161,6 +162,7 @@ class MeowfficerEnhance(MeowfficerBase):
                  MEOWFFICER_FEED_ENTER if failed
         """
         click_count = 0
+        confirm_timer = Timer(3, count=6).start()
         while 1:
             if skip_first_screenshot:
                 skip_first_screenshot = False
@@ -173,7 +175,8 @@ class MeowfficerEnhance(MeowfficerBase):
 
             # End
             if self.appear(MEOWFFICER_FEED_CONFIRM, offset=(20, 20)):
-                return True
+                if confirm_timer.reached():
+                    return True
             if click_count >= 3:
                 logger.warning('Unable to enter meowfficer feed, '
                                'probably because the meowfficer to enhance has reached LV.30')
@@ -213,6 +216,41 @@ class MeowfficerEnhance(MeowfficerBase):
                 confirm_timer.reset()
                 continue
 
+    def meow_enhance_enter(self, skip_first_screenshot=True):
+        """
+        Args:
+            skip_first_screenshot:
+
+        Returns:
+            bool: If success.
+
+        Pages:
+            in: MEOWFFICER_ENHANCE_ENTER
+            out: MEOWFFICER_FEED_ENTER
+        """
+        count = 0
+        while 1:
+            if skip_first_screenshot:
+                skip_first_screenshot = False
+            else:
+                self.device.screenshot()
+
+            # End
+            if self.appear(MEOWFFICER_FEED_ENTER, offset=(20, 20)):
+                return True
+            if count > 3:
+                logger.warning('Too many click on MEOWFFICER_ENHANCE_ENTER, meowfficer may in battle')
+                return False
+
+            if self.appear_then_click(MEOWFFICER_ENHANCE_ENTER, offset=(20, 20), interval=3):
+                count += 1
+                continue
+            if self.meow_additional():
+                continue
+            # Meowfficer enhance tips
+            if self.appear_then_click(GAME_TIPS, offset=(20, 20), interval=2):
+                continue
+
     def _meow_enhance(self):
         """
         Perform meowfficer enhancement operations
@@ -245,15 +283,21 @@ class MeowfficerEnhance(MeowfficerBase):
                         f'enhancement, skip')
             return
 
-        # Select target meowfficer
-        # for enhancement
-        self._meow_select()
+        for _ in range(2):
+            # Select target meowfficer
+            # for enhancement
+            self._meow_select()
 
-        # Transition to MEOWFFICER_FEED after
-        # selection; broken up due to significant
-        # delayed behavior of meow_additional
-        self.ui_click(MEOWFFICER_ENHANCE_ENTER, check_button=MEOWFFICER_FEED_ENTER, additional=self.meow_additional,
-                      retry_wait=3, confirm_wait=0, skip_first_screenshot=True)
+            # Transition to MEOWFFICER_FEED after
+            # selection; broken up due to significant
+            # delayed behavior of meow_additional
+            if self.meow_enhance_enter():
+                break
+            else:
+                # Retreat from an existing battle
+                self.ui_goto_campaign()
+                self.ui_goto(page_meowfficer)
+                continue
 
         # Initiate feed sequence; loop until exhaust all
         # - Select Feed
@@ -264,7 +308,7 @@ class MeowfficerEnhance(MeowfficerBase):
             logger.hr('Enhance once', level=2)
             if not self.meow_feed_enter():
                 # Exit back into page_meowfficer
-                self.ui_click(MEOWFFICER_GOTO_DORM, check_button=MEOWFFICER_ENHANCE_ENTER,
+                self.ui_click(MEOWFFICER_GOTO_DORMMENU, check_button=MEOWFFICER_ENHANCE_ENTER,
                               appear_button=MEOWFFICER_ENHANCE_CONFIRM, offset=None, skip_first_screenshot=True)
                 # Re-enter page_meowfficer
                 self.ui_goto_main()
@@ -281,7 +325,7 @@ class MeowfficerEnhance(MeowfficerBase):
                 break
 
         # Exit back into page_meowfficer
-        self.ui_click(MEOWFFICER_GOTO_DORM, check_button=MEOWFFICER_ENHANCE_ENTER,
+        self.ui_click(MEOWFFICER_GOTO_DORMMENU, check_button=MEOWFFICER_ENHANCE_ENTER,
                       appear_button=MEOWFFICER_ENHANCE_CONFIRM, offset=None, skip_first_screenshot=True)
         return True
 

@@ -2,8 +2,6 @@ import time
 from datetime import datetime, timedelta
 from functools import wraps
 
-from module.logger import logger
-
 
 def timer(function):
     @wraps(function)
@@ -14,6 +12,7 @@ def timer(function):
         t1 = time.time()
         print('%s: %s s' % (function.__name__, str(round(t1 - t0, 10))))
         return result
+
     return function_timer
 
 
@@ -108,7 +107,10 @@ class Timer:
         Returns:
             float
         """
-        return time.time() - self._current
+        if self.started():
+            return time.time() - self._current
+        else:
+            return 0.
 
     def reached(self):
         """
@@ -121,10 +123,12 @@ class Timer:
     def reset(self):
         self._current = time.time()
         self._reach_count = 0
+        return self
 
     def clear(self):
         self._current = 0
         self._reach_count = self.count
+        return self
 
     def reached_and_reset(self):
         """
@@ -146,4 +150,10 @@ class Timer:
             time.sleep(diff)
 
     def show(self):
-        logger.info('%s s' % str(self.current()))
+        from module.logger import logger
+        logger.info(str(self))
+
+    def __str__(self):
+        return f'Timer(limit={round(self.current(), 3)}/{self.limit}, count={self._reach_count}/{self.count})'
+
+    __repr__ = __str__

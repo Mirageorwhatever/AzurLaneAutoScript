@@ -3,7 +3,7 @@ from module.logger import logger
 from module.meowfficer.assets import *
 from module.meowfficer.base import MeowfficerBase
 from module.ocr.ocr import Digit, DigitCounter
-from module.ui.assets import MEOWFFICER_GOTO_DORM
+from module.ui.assets import MEOWFFICER_GOTO_DORMMENU
 
 BUY_MAX = 15
 BUY_PRIZE = 1500
@@ -13,7 +13,7 @@ MEOWFFICER_COINS = Digit(OCR_MEOWFFICER_COINS, letter=(99, 69, 41), threshold=64
 
 
 class MeowfficerBuy(MeowfficerBase):
-    def meow_choose(self, count):
+    def meow_choose(self, count) -> bool:
         """
         Pages:
             in: page_meowfficer
@@ -50,13 +50,12 @@ class MeowfficerBuy(MeowfficerBase):
             count = coins // BUY_PRIZE + int(remain == total)
             logger.info(f'Current coins only enough to buy {count}')
 
-        self.ui_click(MEOWFFICER_BUY_ENTER, check_button=MEOWFFICER_BUY, additional=self.meow_additional,
-                      retry_wait=3, confirm_wait=0, skip_first_screenshot=True)
+        self.meow_enter(MEOWFFICER_BUY_ENTER, check_button=MEOWFFICER_BUY)
         self.ui_ensure_index(count, letter=MEOWFFICER_CHOOSE, prev_button=MEOWFFICER_BUY_PREV,
                              next_button=MEOWFFICER_BUY_NEXT, skip_first_screenshot=True)
         return True
 
-    def meow_confirm(self, skip_first_screenshot=True):
+    def meow_confirm(self, skip_first_screenshot=True) -> None:
         """
         Pages:
             in: MEOWFFICER_BUY
@@ -65,36 +64,42 @@ class MeowfficerBuy(MeowfficerBase):
         # Here uses a simple click, to avoid clicking MEOWFFICER_BUY multiple times.
         # Retry logic is in meow_buy()
         executed = False
-        while 1:
-            if skip_first_screenshot:
-                skip_first_screenshot = False
-            else:
-                self.device.screenshot()
-
-            if self.appear(MEOWFFICER_BUY, offset=(20, 20), interval=3):
-                if executed:
-                    self.device.click(MEOWFFICER_GOTO_DORM)
+        with self.stat.new(
+                genre="meowfficer_buy",
+                method=self.config.DropRecord_MeowfficerBuy,
+        ) as drop:
+            while 1:
+                if skip_first_screenshot:
+                    skip_first_screenshot = False
                 else:
-                    self.device.click(MEOWFFICER_BUY)
-                continue
-            if self.handle_meow_popup_confirm():
-                executed = True
-                continue
-            if self.appear_then_click(MEOWFFICER_BUY_SKIP, interval=3):
-                executed = True
-                continue
-            if self.appear(GET_ITEMS_1, offset=5, interval=3):
-                self.device.click(MEOWFFICER_BUY_SKIP)
-                self.interval_clear(MEOWFFICER_BUY)
-                executed = True
-                continue
+                    self.device.screenshot()
 
-            # End
-            if self.appear(MEOWFFICER_BUY_ENTER, offset=(20, 20)) \
-                    and MEOWFFICER_BUY_ENTER.match_appear_on(self.device.image):
-                break
+                if self.appear(MEOWFFICER_BUY, offset=(20, 20), interval=3):
+                    if executed:
+                        self.device.click(MEOWFFICER_GOTO_DORMMENU)
+                    else:
+                        self.device.click(MEOWFFICER_BUY)
+                    continue
+                if self.handle_meow_popup_confirm():
+                    executed = True
+                    continue
+                if self.appear_then_click(MEOWFFICER_BUY_SKIP, interval=3):
+                    executed = True
+                    continue
+                if self.appear(GET_ITEMS_1, offset=5, interval=3):
+                    if drop.save is True:
+                        drop.handle_add(self, before=2)
+                    self.device.click(MEOWFFICER_BUY_SKIP)
+                    self.interval_clear(MEOWFFICER_BUY)
+                    executed = True
+                    continue
 
-    def meow_buy(self):
+                # End
+                if self.appear(MEOWFFICER_BUY_ENTER, offset=(20, 20)) \
+                        and MEOWFFICER_BUY_ENTER.match_appear_on(self.device.image):
+                    break
+
+    def meow_buy(self) -> bool:
         """
         Pages:
             in: page_meowfficer

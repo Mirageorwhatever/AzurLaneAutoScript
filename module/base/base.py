@@ -1,8 +1,12 @@
 from module.base.button import Button
+from module.base.decorator import cached_property
 from module.base.timer import Timer
 from module.base.utils import *
+from module.combat.emotion import Emotion
 from module.config.config import AzurLaneConfig
+from module.config.server import set_server, to_package
 from module.device.device import Device
+from module.device.method.utils import HierarchyButton
 from module.logger import logger
 from module.map_detection.utils import fit_points
 from module.statistics.azurstats import AzurStats
@@ -11,7 +15,6 @@ from module.statistics.azurstats import AzurStats
 class ModuleBase:
     config: AzurLaneConfig
     device: Device
-    stat: AzurStats
 
     def __init__(self, config, device=None, task=None):
         """
@@ -28,14 +31,26 @@ class ModuleBase:
             self.device = device
         else:
             self.device = Device(config=self.config)
-        self.stat = AzurStats(config=self.config)
-
         self.interval_timer = {}
+
+    @cached_property
+    def stat(self) -> AzurStats:
+        return AzurStats(config=self.config)
+
+    @cached_property
+    def emotion(self) -> Emotion:
+        return Emotion(config=self.config)
+
+    def ensure_button(self, button):
+        if isinstance(button, str):
+            button = HierarchyButton(self.device.hierarchy, button)
+
+        return button
 
     def appear(self, button, offset=0, interval=0, threshold=None):
         """
         Args:
-            button (Button, Template):
+            button (Button, Template, HierarchyButton, str):
             offset (bool, int):
             interval (int, float): interval between two active events.
             threshold (int, float): 0 to 1 if use offset, bigger means more similar,
@@ -43,7 +58,22 @@ class ModuleBase:
 
         Returns:
             bool:
+
+        Examples:
+            Image detection:
+            ```
+            self.device.screenshot()
+            self.appear(Button(area=(...), color=(...), button=(...))
+            self.appear(Template(file='...')
+            ```
+
+            Hierarchy detection (detect elements with xpath):
+            ```
+            self.device.dump_hierarchy()
+            self.appear('//*[@resource-id="..."]')
+            ```
         """
+        button = self.ensure_button(button)
         self.device.stuck_record_add(button)
 
         if interval:
@@ -55,7 +85,9 @@ class ModuleBase:
             if not self.interval_timer[button.name].reached():
                 return False
 
-        if offset:
+        if isinstance(button, HierarchyButton):
+            appear = bool(button)
+        elif offset:
             if isinstance(offset, bool):
                 offset = self.config.BUTTON_OFFSET
             appear = button.match(self.device.image, offset=offset,
@@ -69,8 +101,9 @@ class ModuleBase:
 
         return appear
 
-    def appear_then_click(self, button, screenshot=False, genre='items', offset=0, interval=0):
-        appear = self.appear(button, offset=offset, interval=interval)
+    def appear_then_click(self, button, screenshot=False, genre='items', offset=0, interval=0, threshold=None):
+        button = self.ensure_button(button)
+        appear = self.appear(button, offset=offset, interval=interval, threshold=threshold)
         if appear:
             if screenshot:
                 self.device.sleep(self.config.WAIT_BEFORE_SAVING_SCREEN_SHOT)
@@ -178,17 +211,23 @@ class ModuleBase:
         if isinstance(button, (list, tuple)):
             for b in button:
                 self.interval_reset(b)
+            return
+
+        if button.name in self.interval_timer:
+            self.interval_timer[button.name].reset()
         else:
-            if button.name in self.interval_timer:
-                self.interval_timer[button.name].reset()
+            self.interval_timer[button.name] = Timer(3).reset()
 
     def interval_clear(self, button):
         if isinstance(button, (list, tuple)):
             for b in button:
                 self.interval_clear(b)
+            return
+
+        if button.name in self.interval_timer:
+            self.interval_timer[button.name].clear()
         else:
-            if button.name in self.interval_timer:
-                self.interval_timer[button.name].clear()
+            self.interval_timer[button.name] = Timer(3).clear()
 
     _image_file = ''
 
@@ -209,3 +248,14 @@ class ModuleBase:
             value = load_image(value)
 
         self.device.image = value
+
+    def set_server(self, server):
+        """
+        For development.
+        Change server and this will effect globally,
+        including assets and server specific methods.
+        """
+        package = to_package(server)
+        self.device.package = package
+        set_server(server)
+        logger.attr('Server', self.config.SERVER)

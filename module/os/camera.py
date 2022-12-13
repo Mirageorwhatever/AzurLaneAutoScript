@@ -5,7 +5,7 @@ from module.base.decorator import cached_property
 from module.exception import MapDetectionError
 from module.logger import logger
 from module.map.camera import Camera
-from module.map.map_base import location_ensure, location2node
+from module.map.map_base import location2node, location_ensure
 from module.map_detection.os_grid import OSGrid
 from module.map_detection.view import View
 from module.os.map_operation import OSMapOperation
@@ -16,7 +16,7 @@ class OSCamera(OSMapOperation, Camera):
     radar: Radar
     fleet_current: tuple
 
-    def _map_swipe(self, vector, box=(234, 123, 998, 633)):
+    def _map_swipe(self, vector, box=(239, 128, 993, 628)):
         return super()._map_swipe(vector, box=box)
 
     def _view_init(self):

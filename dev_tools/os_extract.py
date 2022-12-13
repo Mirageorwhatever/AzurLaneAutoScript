@@ -1,7 +1,6 @@
-from module.logger import logger  # Change folder automatically
-
 from dev_tools.utils import LuaLoader
 from module.base.utils import location2node
+from module.logger import logger  # Change folder automatically
 from module.os.map_data import DIC_OS_MAP
 
 
@@ -49,7 +48,7 @@ class OSChapter:
             if not isinstance(index, int) or index >= 200:
                 continue
             name = chapter['name']
-            name = name.replace('é', 'e')  # OCR can't recognise letter "é"
+            name = name.replace('é', 'e')  # OCR can't recognize letter "é"
             out[index] = name
 
         # Zone 40000 is zone 154

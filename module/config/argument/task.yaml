@@ -6,6 +6,7 @@
 
 Alas:
   - Emulator
+  - RestartEmulator
   - Error
   - Optimization
   - DropRecord
@@ -25,38 +26,31 @@ Main:
   - Emotion
   - HpControl
   - EnemyPriority
-C72MysteryFarming:
+Main2:
   - Scheduler
-  - C72MysteryFarming
-  - Campaign
-  - StopCondition
-  - Fleet
-  - Emotion
-  - HpControl
-C122MediumLeveling:
-  - Scheduler
-  - C122MediumLeveling
   - Campaign
   - StopCondition
   - Fleet
   - Submarine
   - Emotion
   - HpControl
-C124LargeLeveling:
+  - EnemyPriority
+Main3:
   - Scheduler
-  - C124LargeLeveling
   - Campaign
   - StopCondition
   - Fleet
   - Submarine
   - Emotion
   - HpControl
+  - EnemyPriority
 GemsFarming:
   - Scheduler
   - GemsFarming
   - Campaign
   - StopCondition
   - Fleet
+  - Submarine
   - Emotion
   - EnemyPriority
 
@@ -64,6 +58,7 @@ GemsFarming:
 
 EventGeneral:
   - EventGeneral
+  - TaskBalancer
 Event:
   - Scheduler
   - Campaign
@@ -73,24 +68,55 @@ Event:
   - Emotion
   - HpControl
   - EnemyPriority
-EventAb:
+Event2:
   - Scheduler
-  - EventAb
   - Campaign
   - StopCondition
   - Fleet
   - Submarine
   - Emotion
   - HpControl
-EventCd:
+  - EnemyPriority
+EventA:
   - Scheduler
-  - EventCd
+  - EventDaily
   - Campaign
   - StopCondition
   - Fleet
   - Submarine
   - Emotion
   - HpControl
+  - EnemyPriority
+EventB:
+  - Scheduler
+  - EventDaily
+  - Campaign
+  - StopCondition
+  - Fleet
+  - Submarine
+  - Emotion
+  - HpControl
+  - EnemyPriority
+EventC:
+  - Scheduler
+  - EventDaily
+  - Campaign
+  - StopCondition
+  - Fleet
+  - Submarine
+  - Emotion
+  - HpControl
+  - EnemyPriority
+EventD:
+  - Scheduler
+  - EventDaily
+  - Campaign
+  - StopCondition
+  - Fleet
+  - Submarine
+  - Emotion
+  - HpControl
+  - EnemyPriority
 EventSp:
   - Scheduler
   - Campaign
@@ -99,6 +125,7 @@ EventSp:
   - Submarine
   - Emotion
   - HpControl
+  - EnemyPriority
 Raid:
   - Scheduler
   - Raid
@@ -124,6 +151,7 @@ Tactical:
   - Scheduler
   - Tactical
   - ControlExpOverflow
+  - AddNewStudent
 Research:
   - Scheduler
   - Research
@@ -150,7 +178,7 @@ ShopFrequent:
 ShopOnce:
   - Scheduler
   - GuildShop
-  - MedalShop
+  - MedalShop2
   - MeritShop
   - CoreShop
 Shipyard:
@@ -159,18 +187,12 @@ Shipyard:
 Gacha:
   - Scheduler
   - Gacha
-DataKey:
-  - Scheduler
-  - DataKey
-SupplyPack:
-  - Scheduler
-  - SupplyPack
-BattlePass:
+Freebies:
   - Scheduler
   - BattlePass
-MetaReward:
-  - Scheduler
-  - MetaReward
+  - DataKey
+  - Mail
+  - SupplyPack
 
 # ==================== DailyMission ====================
 
@@ -192,6 +214,7 @@ Sos:
   - Submarine
   - Emotion
   - HpControl
+  - EnemyPriority
 WarArchives:
   - Scheduler
   - Campaign
@@ -200,12 +223,16 @@ WarArchives:
   - Submarine
   - Emotion
   - HpControl
+  - EnemyPriority
 
 # ==================== Opsi ====================
 
 OpsiGeneral:
   - OpsiGeneral
+OpsiAshBeacon:
+  - Scheduler
   - OpsiAshBeacon
+  - OpsiDossierBeacon
 OpsiAshAssist:
   - Scheduler
   - OpsiAshAssist
@@ -216,6 +243,9 @@ OpsiExplore:
 OpsiShop:
   - Scheduler
   - OpsiShop
+OpsiVoucher:
+  - Scheduler
+  - OpsiVoucher
 OpsiDaily:
   - Scheduler
   - OpsiDaily
@@ -228,6 +258,10 @@ OpsiAbyssal:
   - Scheduler
   - OpsiAbyssal
   - OpsiFleetFilter
+OpsiArchive:
+  - Scheduler
+  - OpsiArchive
+  - OpsiFleet
 OpsiStronghold:
   - Scheduler
   - OpsiStronghold
@@ -236,6 +270,12 @@ OpsiMeowfficerFarming:
   - Scheduler
   - OpsiMeowfficerFarming
   - OpsiFleet
+OpsiHazard1Leveling:
+  - Scheduler
+  - OpsiHazard1Leveling
+  - OpsiFleet
+OpsiCrossMonth:
+  - Scheduler
 
 # ==================== Tool ====================
 

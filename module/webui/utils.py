@@ -9,8 +9,9 @@ from queue import Queue
 from typing import Callable, Generator, List
 
 import pywebio
+from module.config.utils import deep_iter
 from module.logger import logger
-from module.webui.setting import Setting
+from module.webui.setting import State
 from pywebio.input import PASSWORD, input
 from pywebio.output import PopupSize, popup, put_html, toast
 from pywebio.session import eval_js
@@ -19,10 +20,10 @@ from pywebio.session import register_thread, run_js
 from rich.console import Console, ConsoleOptions
 from rich.terminal_theme import TerminalTheme
 
+
 RE_DATETIME = (
-    r"(\d{2}|\d{4})(?:\-)?([0]{1}\d{1}|[1]{1}[0-2]{1})(?:\-)?"
-    + r"([0-2]{1}\d{1}|[3]{1}[0-1]{1})(?:\s)?([0-1]{1}\d{1}|[2]"
-    + r"{1}[0-3]{1})(?::)?([0-5]{1}\d{1})(?::)?([0-5]{1}\d{1})"
+    r"\d{4}\-(0\d|1[0-2])\-([0-2]\d|[3][0-1]) "
+    r"([0-1]\d|[2][0-3]):([0-5]\d):([0-5]\d)"
 )
 
 
@@ -396,6 +397,7 @@ str2type = {
     "float": float,
     "int": int,
     "bool": bool,
+    "ignore": lambda x: x,
 }
 
 
@@ -426,11 +428,11 @@ def parse_pin_value(val, valuetype: str = None):
 
 
 def login(password):
-    if get_localstorage("password") == password:
+    if get_localstorage("password") == str(password):
         return True
     pwd = input(label="Please login below.", type=PASSWORD, placeholder="PASSWORD")
-    if pwd == password:
-        set_localstorage("password", pwd)
+    if str(pwd) == str(password):
+        set_localstorage("password", str(pwd))
         return True
     else:
         toast("Wrong password!", color="error")
@@ -490,7 +492,7 @@ def on_task_exception(self):
             word_wrap=True, extra_lines=1, show_locals=True
         )
 
-    if Setting.theme == "dark":
+    if State.theme == "dark":
         theme = DARK_TERMINAL_THEME
     else:
         theme = LIGHT_TERMINAL_THEME
@@ -520,6 +522,13 @@ def raise_exception(x=3):
         raise_exception(x - 1)
     else:
         raise Exception("quq")
+
+
+def get_alas_config_listen_path(args):
+    for path, d in deep_iter(args, depth=3):
+        if d.get("display") in ["readonly", "hide"]:
+            continue
+        yield path
 
 
 if __name__ == "__main__":

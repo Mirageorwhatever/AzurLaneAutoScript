@@ -1,5 +1,6 @@
 import os
 import re
+from deploy.logger import logger
 
 BASE_FOLDER = './deploy/AidLux'
 
@@ -36,15 +37,15 @@ def write_file(file, data):
         else:
             lines.append(str(name))
 
-    with open(file, 'w', encoding='utf-8') as f:
+    with open(file, 'w', encoding='utf-8', newline='') as f:
         f.write('\n'.join(lines))
 
 
 def aidlux_requirements_generate(requirements_in='requirements-in.txt'):
-    print('aidlux_requirements_generate')
+    logger.info('aidlux_requirements_generate')
     requirements = read_file(requirements_in)
     for aidlux in iter_version():
-        print(f'Generate requirements for AidLux {aidlux}')
+        logger.info(f'Generate requirements for AidLux {aidlux}')
         pre_installed = read_file(os.path.join(BASE_FOLDER, f'./{aidlux}/pre-installed.txt'))
         new = {}
         for name, version in requirements.items():
@@ -58,3 +59,6 @@ def aidlux_requirements_generate(requirements_in='requirements-in.txt'):
             new[name] = version
 
         write_file(os.path.join(BASE_FOLDER, f'./{aidlux}/requirements.txt'), data=new)
+
+if __name__ == "__main__":
+    aidlux_requirements_generate()

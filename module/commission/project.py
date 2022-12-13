@@ -1,12 +1,13 @@
 import re
 from datetime import datetime, timedelta
 
+import module.config.server as server
 from module.base.decorator import Config
 from module.base.filter import Filter
 from module.base.utils import *
 from module.commission.project_data import *
 from module.logger import logger
-from module.ocr.ocr import Ocr, Duration
+from module.ocr.ocr import Duration, Ocr
 from module.reward.assets import *
 
 COMMISSION_FILTER = Filter(
@@ -21,14 +22,6 @@ COMMISSION_FILTER = Filter(
     attr=('category_str', 'genre_str', 'duration_hm', 'duration_hour'),
     preset=('shortest',)
 )
-SHORTEST_FILTER = """
-0:20 > 0:30
-> 1 > 1:10 > 1:20 > 1:30 > 1:40 > 1:45
-> 2 > 2:15 > 2:30 > 2:40
-> 3 > 3:20
-> 4 > 5 > 5:20
-> 6 > 7 > 8 > 9 > 10 > 12
-"""
 
 
 class SuffixOcr(Ocr):
@@ -36,10 +29,29 @@ class SuffixOcr(Ocr):
         image = super().pre_process(image)
 
         left = np.where(np.min(image[5:-5, :], axis=0) < 85)[0]
+        # Look back several pixels
+        if server.server in ['jp']:
+            look_back = 21
+        else:
+            look_back = 18
         if len(left):
-            image = image[:, left[-1] - 15:]
+            image = image[:, left[-1] - look_back:]
 
         return image
+
+
+class TwOcr(Ocr):
+    def after_process(self, result):
+        """
+        Args:
+            result (str): '第二行'
+
+        Returns:
+            str:
+        """
+        # There no letter `艦` in training dataset
+        result = result.replace('鑑', '艦')
+        return result
 
 
 class Commission:
@@ -192,7 +204,7 @@ class Commission:
         # Name
         area = area_offset((176, 23, 420, 53), self.area[0:2])
         button = Button(area=area, color=(), button=area, name='COMMISSION')
-        ocr = Ocr(button, lang='tw', threshold=256)
+        ocr = TwOcr(button, lang='tw', threshold=256)
         self.button = button
         self.name = ocr.ocr(self.image)
         self.genre = self.commission_name_parse(self.name)
@@ -319,6 +331,8 @@ class Commission:
             if (other.expire < self.expire - threshold) or (other.expire > self.expire + threshold):
                 return False
         if self.repeat_count != other.repeat_count:
+            return False
+        if self.genre in ['extra_oil', 'night_oil'] and self.suffix != other.suffix:
             return False
 
         return True

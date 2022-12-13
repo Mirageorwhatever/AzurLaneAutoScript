@@ -5,7 +5,7 @@ from module.base.filter import Filter
 from module.exception import MapEnemyMoved
 from module.logger import logger
 from module.map.fleet import Fleet
-from module.map.map_grids import SelectedGrids, RoadGrids
+from module.map.map_grids import RoadGrids, SelectedGrids
 from module.map_detection.grid_info import GridInfo
 
 ENEMY_FILTER = Filter(regex=re.compile('^(.*?)$'), attr=('str',))
@@ -193,11 +193,12 @@ class Map(Fleet):
 
         target = self.config.EnemyPriority_EnemyScaleBalanceWeight
         if target == 'S3_enemy_first':
-            grids = self.select_grids(grids, strongest=True, **kwargs)
+            kwargs['strongest'] = True
         elif target == 'S1_enemy_first':
-            grids = self.select_grids(grids, weakest=True, **kwargs)
-        else:
-            grids = self.select_grids(grids, **kwargs)
+            kwargs['weakest'] = True
+        elif self.config.MAP_CLEAR_ALL_THIS_TIME:
+            kwargs['strongest'] = True
+        grids = self.select_grids(grids, **kwargs)
 
         if grids:
             logger.hr('Clear enemy')
@@ -222,11 +223,12 @@ class Map(Fleet):
 
         target = self.config.EnemyPriority_EnemyScaleBalanceWeight
         if target == 'S3_enemy_first':
-            grids = self.select_grids(grids, strongest=True, **kwargs)
+            kwargs['strongest'] = True
         elif target == 'S1_enemy_first':
-            grids = self.select_grids(grids, weakest=True, **kwargs)
-        else:
-            grids = self.select_grids(grids, **kwargs)
+            kwargs['weakest'] = True
+        elif self.config.MAP_CLEAR_ALL_THIS_TIME:
+            kwargs['strongest'] = True
+        grids = self.select_grids(grids, **kwargs)
 
         if grids:
             logger.hr('Clear roadblock')
@@ -251,11 +253,12 @@ class Map(Fleet):
 
         target = self.config.EnemyPriority_EnemyScaleBalanceWeight
         if target == 'S3_enemy_first':
-            grids = self.select_grids(grids, strongest=True, **kwargs)
+            kwargs['strongest'] = True
         elif target == 'S1_enemy_first':
-            grids = self.select_grids(grids, weakest=True, **kwargs)
-        else:
-            grids = self.select_grids(grids, **kwargs)
+            kwargs['weakest'] = True
+        elif self.config.MAP_CLEAR_ALL_THIS_TIME:
+            kwargs['strongest'] = True
+        grids = self.select_grids(grids, **kwargs)
 
         if grids:
             logger.hr('Avoid potential roadblock')
@@ -447,7 +450,9 @@ class Map(Fleet):
 
         if self.config.FLEET_2:
             kwargs['sort'] = ('weight', 'cost_2')
-        grids = self.map.select(is_siren=True).add(self.map.select(is_fortress=True))
+        grids = self.map.select(is_siren=True)
+        if self.config.MAP_HAS_FORTRESS:
+            grids = grids.add(self.map.select(is_fortress=True))
         grids = self.select_grids(grids, **kwargs)
 
         if grids:
@@ -642,7 +647,7 @@ class Map(Fleet):
 
     def clear_filter_enemy(self, string, preserve=0):
         """
-        if EnemyPriority_EnemyScaleBalanceWeight != default_mode  
+        if EnemyPriority_EnemyScaleBalanceWeight != default_mode
         Filter will be covered
 
         Args:
@@ -655,6 +660,7 @@ class Map(Fleet):
         """
         if self.config.EnemyPriority_EnemyScaleBalanceWeight == 'S3_enemy_first':
             string = '3L > 3M > 3E > 3C > 2L > 2M > 2E > 2C > 1L > 1M > 1E > 1C'
+            preserve = 0
         elif self.config.EnemyPriority_EnemyScaleBalanceWeight == 'S1_enemy_first':
             string = '1L > 1M > 1E > 1C > 2L > 2M > 2E > 2C > 3L > 3M > 3E > 3C'
 

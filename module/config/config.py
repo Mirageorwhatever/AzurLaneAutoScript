@@ -9,6 +9,7 @@ from module.base.filter import Filter
 from module.config.config_generated import GeneratedConfig
 from module.config.config_manual import ManualConfig, OutputConfig
 from module.config.config_updater import ConfigUpdater
+from module.config.watcher import ConfigWatcher
 from module.config.utils import *
 from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
@@ -21,13 +22,13 @@ class TaskEnd(Exception):
 
 class Function:
     def __init__(self, data):
-        self.enable = deep_get(data, keys='Scheduler.Enable', default=False)
-        self.command = deep_get(data, keys='Scheduler.Command', default='Unknown')
-        self.next_run = deep_get(data, keys='Scheduler.NextRun', default=datetime(2020, 1, 1, 0, 0))
+        self.enable = deep_get(data, keys="Scheduler.Enable", default=False)
+        self.command = deep_get(data, keys="Scheduler.Command", default="Unknown")
+        self.next_run = deep_get(data, keys="Scheduler.NextRun", default=DEFAULT_TIME)
 
     def __str__(self):
-        enable = 'Enable' if self.enable else 'Disable'
-        return f'{self.command} ({enable}, {str(self.next_run)})'
+        enable = "Enable" if self.enable else "Disable"
+        return f"{self.command} ({enable}, {str(self.next_run)})"
 
     __repr__ = __str__
 
@@ -55,7 +56,7 @@ def name_to_function(name):
     return function
 
 
-class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
+class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig, ConfigWatcher):
     stop_event: threading.Event = None
     bound = {}
 
@@ -72,7 +73,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
             super().__setattr__(key, value)
 
     def __init__(self, config_name, task=None):
-        logger.attr('Server', server.server)
+        logger.attr("Server", self.SERVER)
         # This will read ./config/<config_name>.json
         self.config_name = config_name
         # Raw json data in yaml file.
@@ -95,42 +96,51 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         # Task to run and bind.
         # Task means the name of the function to run in AzurLaneAutoScript class.
         self.task: Function
-        if config_name == 'template':
+        if config_name == "template":
             # For dev tools
-            logger.info('Using template config, which is read only')
+            logger.info("Using template config, which is read only")
             self.auto_update = False
-            self.task = name_to_function('template')
+            self.task = name_to_function("template")
         else:
             self.load()
             if task is None:
                 # Bind `Alas` by default which includes emulator settings.
-                task = name_to_function('Alas')
+                task = name_to_function("Alas")
             else:
                 # Bind a specific task for debug purpose.
                 task = name_to_function(task)
             self.bind(task)
             self.task = task
+            self.save()
 
     def load(self):
         self.data = self.read_file(self.config_name)
-        ConfigTypeChecker.check(self.data)
+        self.config_override()
 
         for path, value in self.modified.items():
             deep_set(self.data, keys=path, value=value)
 
-    def bind(self, func):
+    def bind(self, func, func_set=None):
         """
         Args:
             func (str, Function): Function to run
+            func_set (set): Set of tasks to be bound
         """
+        if func_set is None:
+            func_set = {"General", "Alas"}
         if isinstance(func, Function):
             func = func.command
-        func_set = {func, 'General', 'Alas'}
-        if func.startswith('Opsi'):
-            func_set.add('OpsiGeneral')
-        if func.startswith('Event') or func.startswith('Raid') or func in ['MaritimeEscort', 'GemsFarming']:
-            func_set.add('EventGeneral')
-        logger.info(f'Bind task {func_set}')
+        func_set.add(func)
+        if func.startswith("Opsi"):
+            func_set.add("OpsiGeneral")
+        if (
+            func.startswith("Event")
+            or func.startswith("Raid")
+            or func in ["MaritimeEscort", "GemsFarming"]
+        ):
+            func_set.add("EventGeneral")
+            func_set.add("TaskBalancer")
+        logger.info(f"Bind task {func_set}")
 
         # Bind arguments
         visited = set()
@@ -139,12 +149,12 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
             func_data = self.data.get(func, {})
             for group, group_data in func_data.items():
                 for arg, value in group_data.items():
-                    path = f'{group}.{arg}'
+                    path = f"{group}.{arg}"
                     if path in visited:
                         continue
                     arg = path_to_arg(path)
                     super().__setattr__(arg, value)
-                    self.bound[arg] = f'{func}.{path}'
+                    self.bound[arg] = f"{func}.{path}"
                     visited.add(path)
 
         # Override arguments
@@ -153,12 +163,18 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
 
     @property
     def hoarding(self):
-        minutes = int(deep_get(self.data, keys='Alas.Optimization.TaskHoardingDuration', default=0))
+        minutes = int(
+            deep_get(
+                self.data, keys="Alas.Optimization.TaskHoardingDuration", default=0
+            )
+        )
         return timedelta(minutes=max(minutes, 0))
 
     @property
     def close_game(self):
-        return deep_get(self.data, keys='Alas.Optimization.CloseGameDuringWait', default=False)
+        return deep_get(
+            self.data, keys="Alas.Optimization.CloseGameDuringWait", default=False
+        )
 
     def get_next_task(self):
         """
@@ -166,6 +182,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         """
         pending = []
         waiting = []
+        error = []
         now = datetime.now()
         if AzurLaneConfig.is_hoarding_task:
             now -= self.hoarding
@@ -173,17 +190,22 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
             func = Function(func)
             if not func.enable:
                 continue
-            if func.next_run < now:
+            if not isinstance(func.next_run, datetime):
+                error.append(func)
+            elif func.next_run < now:
                 pending.append(func)
             else:
                 waiting.append(func)
 
+        f = Filter(regex=r"(.*)", attr=["command"])
+        f.load(self.SCHEDULER_PRIORITY)
         if pending:
-            f = Filter(regex=r'(.*)', attr=['command'])
-            f.load(self.SCHEDULER_PRIORITY)
-            pending = f.apply(pending, func=lambda x: x.enable)
+            pending = f.apply(pending)
         if waiting:
-            waiting = sorted(waiting, key=operator.attrgetter('next_run'))
+            waiting = f.apply(waiting)
+            waiting = sorted(waiting, key=operator.attrgetter("next_run"))
+        if error:
+            pending = error + pending
 
         self.pending_task = pending
         self.waiting_task = waiting
@@ -197,40 +219,79 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
 
         if self.pending_task:
             AzurLaneConfig.is_hoarding_task = False
-            logger.info(f'Pending tasks: {[f.command for f in self.pending_task]}')
+            logger.info(f"Pending tasks: {[f.command for f in self.pending_task]}")
             task = self.pending_task[0]
-            logger.attr('Task', task)
+            logger.attr("Task", task)
             return task
         else:
             AzurLaneConfig.is_hoarding_task = True
 
         if self.waiting_task:
-            logger.info('No task pending')
+            logger.info("No task pending")
             task = copy.deepcopy(self.waiting_task[0])
             task.next_run = (task.next_run + self.hoarding).replace(microsecond=0)
-            logger.attr('Task', task)
+            logger.attr("Task", task)
             return task
         else:
-            logger.critical('No task waiting or pending')
-            logger.critical('Please enable at least one task')
+            logger.critical("No task waiting or pending")
+            logger.critical("Please enable at least one task")
             raise RequestHumanTakeover
 
-    def save(self):
+    def save(self, mod_name='alas'):
         if not self.modified:
             return False
 
         for path, value in self.modified.items():
             deep_set(self.data, keys=path, value=value)
 
-        logger.info(f'Save config {filepath_config(self.config_name)}, {dict_to_kv(self.modified)}')
+        logger.info(
+            f"Save config {filepath_config(self.config_name, mod_name)}, {dict_to_kv(self.modified)}"
+        )
         # Don't use self.modified = {}, that will create a new object.
         self.modified.clear()
-        write_file(filepath_config(self.config_name), data=self.data)
+        self.write_file(self.config_name, data=self.data)
 
     def update(self):
         self.load()
+        self.config_override()
         self.bind(self.task)
         self.save()
+
+    def config_override(self):
+        now = datetime.now().replace(microsecond=0)
+        limited = set()
+
+        def limit_next_run(tasks, limit):
+            for task in tasks:
+                if task in limited:
+                    continue
+                limited.add(task)
+                next_run = deep_get(
+                    self.data, keys=f"{task}.Scheduler.NextRun", default=None
+                )
+                if isinstance(next_run, datetime) and next_run > limit:
+                    deep_set(self.data, keys=f"{task}.Scheduler.NextRun", value=now)
+
+        for task in ["Commission", "Research", "Reward"]:
+            enable = deep_get(
+                self.data, keys=f"{task}.Scheduler.Enable", default=None
+            )
+            if enable is not None and not enable:
+                self.modified[f"{task}.Scheduler.Enable"] = True
+        force_enable = list
+
+        force_enable(
+            [
+                "Commission",
+                "Research",
+                "Reward",
+            ]
+        )
+        limit_next_run(["Commission", "Reward"], limit=now + timedelta(hours=12, seconds=-1))
+        limit_next_run(["Research"], limit=now + timedelta(hours=24, seconds=-1))
+        limit_next_run(["OpsiExplore", "OpsiCrossMonth", "OpsiVoucher"], limit=now + timedelta(days=31, seconds=-1))
+        limit_next_run(["OpsiArchive"], limit=now + timedelta(days=7, seconds=-1))
+        limit_next_run(self.args.keys(), limit=now + timedelta(hours=24, seconds=-1))
 
     def override(self, **kwargs):
         """
@@ -250,7 +311,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         """
         with self.multi_set():
             for arg, value in kwargs.items():
-                record = arg.replace('Value', 'Record')
+                record = arg.replace("Value", "Record")
                 self.__setattr__(arg, value)
                 self.__setattr__(record, datetime.now().replace(microsecond=0))
 
@@ -265,7 +326,35 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         """
         return MultiSetWrapper(main=self)
 
-    def task_delay(self, success=None, server_update=None, target=None, minute=None):
+    def cross_get(self, keys, default=None):
+        """
+        Get configs from other tasks.
+
+        Args:
+            keys (str, list[str]): Such as `{task}.Scheduler.Enable`
+            default:
+
+        Returns:
+            Any:
+        """
+        return deep_get(self.data, keys=keys, default=default)
+
+    def cross_set(self, keys, value):
+        """
+        Set configs to other tasks.
+
+        Args:
+            keys (str, list[str]): Such as `{task}.Scheduler.Enable`
+            value (Any):
+
+        Returns:
+            Any:
+        """
+        self.modified[keys] = value
+        if self.auto_update:
+            self.update()
+
+    def task_delay(self, success=None, server_update=None, target=None, minute=None, task=None):
         """
         Set Scheduler.NextRun
         Should set at least one arguments.
@@ -282,6 +371,8 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
                 Delay to such time.
             minute (int, float, tuple):
                 Delay several minutes.
+            task (str):
+                Set across task. None for current task.
         """
 
         def ensure_delta(delay):
@@ -289,7 +380,11 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
 
         run = []
         if success is not None:
-            interval = self.Scheduler_SuccessInterval if success else self.Scheduler_FailureInterval
+            interval = (
+                self.Scheduler_SuccessInterval
+                if success
+                else self.Scheduler_FailureInterval
+            )
             run.append(datetime.now() + ensure_delta(interval))
         if server_update is not None:
             if server_update is True:
@@ -305,69 +400,122 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         if len(run):
             run = min(run).replace(microsecond=0)
             kv = dict_to_kv(
-                {'success': success, 'server_update': server_update, 'target': target, 'minute': minute},
-                allow_none=False)
-            logger.info(f'Delay task `{self.task.command}` to {run} ({kv})')
-            self.Scheduler_NextRun = run
+                {
+                    "success": success,
+                    "server_update": server_update,
+                    "target": target,
+                    "minute": minute,
+                },
+                allow_none=False,
+            )
+            logger.info(f"Delay task `{self.task.command}` to {run} ({kv})")
+            if task is None:
+                task = self.task.command
+            self.modified[f'{task}.Scheduler.NextRun'] = run
+            self.update()
         else:
-            raise ScriptError('Missing argument in delay_next_run, should set at least one')
+            raise ScriptError(
+                "Missing argument in delay_next_run, should set at least one"
+            )
 
     def opsi_task_delay(self, recon_scan=False, submarine_call=False, ap_limit=False):
         """
         Delay the NextRun of all OpSi tasks.
 
         Args:
-            recon_scan (bool): True to delay all tasks requiring recon scan 30 min.
+            recon_scan (bool): True to delay all tasks requiring recon scan 27 min.
             submarine_call (bool): True to delay all tasks requiring submarine call 60 min.
             ap_limit (bool): True to delay all tasks requiring action points 360 min.
         """
         if not recon_scan and not submarine_call and not ap_limit:
             return None
-        kv = dict_to_kv({'recon_scan': recon_scan, 'submarine_call': submarine_call, 'ap_limit': ap_limit})
+        kv = dict_to_kv(
+            {
+                "recon_scan": recon_scan,
+                "submarine_call": submarine_call,
+                "ap_limit": ap_limit,
+            }
+        )
 
         def delay_tasks(task_list, minutes):
-            next_run = datetime.now().replace(microsecond=0) + timedelta(minutes=minutes)
+            next_run = datetime.now().replace(microsecond=0) + timedelta(
+                minutes=minutes
+            )
             for task in task_list:
-                keys = f'{task}.Scheduler.NextRun'
-                current = deep_get(self.data, keys=keys, default=datetime(2020, 1, 1, 0, 0))
+                keys = f"{task}.Scheduler.NextRun"
+                current = deep_get(self.data, keys=keys, default=DEFAULT_TIME)
                 if current < next_run:
-                    logger.info(f'Delay task `{task}` to {next_run} ({kv})')
+                    logger.info(f"Delay task `{task}` to {next_run} ({kv})")
                     self.modified[keys] = next_run
 
         def is_submarine_call(task):
-            return deep_get(self.data, keys=f'{task}.OpsiFleet.Submarine', default=False) \
-                   or 'submarine' in deep_get(self.data, keys=f'{task}.OpsiFleetFilter.Filter', default='').lower()
+            return (
+                deep_get(self.data, keys=f"{task}.OpsiFleet.Submarine", default=False)
+                or "submarine"
+                in deep_get(
+                    self.data, keys=f"{task}.OpsiFleetFilter.Filter", default=""
+                ).lower()
+            )
 
         def is_force_run(task):
-            return deep_get(self.data, keys=f'{task}.OpsiExplore.ForceRun', default=False) \
-                   or deep_get(self.data, keys=f'{task}.OpsiObscure.ForceRun', default=False) \
-                   or deep_get(self.data, keys=f'{task}.OpsiAbyssal.ForceRun', default=False) \
-                   or deep_get(self.data, keys=f'{task}.OpsiStronghold.ForceRun', default=False)
+            return (
+                deep_get(self.data, keys=f"{task}.OpsiExplore.ForceRun", default=False)
+                or deep_get(
+                    self.data, keys=f"{task}.OpsiObscure.ForceRun", default=False
+                )
+                or deep_get(
+                    self.data, keys=f"{task}.OpsiAbyssal.ForceRun", default=False
+                )
+                or deep_get(
+                    self.data, keys=f"{task}.OpsiStronghold.ForceRun", default=False
+                )
+            )
 
         def is_special_radar(task):
-            return deep_get(self.data, keys=f'{task}.OpsiExplore.SpecialRadar', default=False)
+            return deep_get(
+                self.data, keys=f"{task}.OpsiExplore.SpecialRadar", default=False
+            )
 
         if recon_scan:
-            tasks = SelectedGrids(['OpsiExplore', 'OpsiObscure', 'OpsiStronghold'])
-            tasks = tasks.delete(tasks.filter(is_force_run)).delete(tasks.filter(is_special_radar))
-            delay_tasks(tasks, minutes=30)
+            tasks = SelectedGrids(["OpsiExplore", "OpsiObscure", "OpsiStronghold"])
+            tasks = tasks.delete(tasks.filter(is_force_run)).delete(
+                tasks.filter(is_special_radar)
+            )
+            delay_tasks(tasks, minutes=27)
         if submarine_call:
-            tasks = SelectedGrids(['OpsiExplore', 'OpsiDaily', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold',
-                                   'OpsiMeowfficerFarming'])
+            tasks = SelectedGrids(
+                [
+                    "OpsiExplore",
+                    "OpsiDaily",
+                    "OpsiObscure",
+                    "OpsiAbyssal",
+                    "OpsiArchive",
+                    "OpsiStronghold",
+                    "OpsiMeowfficerFarming",
+                ]
+            )
             tasks = tasks.filter(is_submarine_call).delete(tasks.filter(is_force_run))
             delay_tasks(tasks, minutes=60)
         if ap_limit:
-            tasks = SelectedGrids(['OpsiExplore', 'OpsiDaily', 'OpsiObscure', 'OpsiAbyssal', 'OpsiStronghold',
-                                   'OpsiMeowfficerFarming'])
+            tasks = SelectedGrids(
+                [
+                    "OpsiExplore",
+                    "OpsiDaily",
+                    "OpsiObscure",
+                    "OpsiAbyssal",
+                    "OpsiStronghold",
+                    "OpsiMeowfficerFarming",
+                ]
+            )
             if get_os_reset_remain() > 0:
                 delay_tasks(tasks, minutes=360)
             else:
-                logger.info('Just less than 1 day to OpSi reset, delay 2.5 hours')
+                logger.info("Just less than 1 day to OpSi reset, delay 2.5 hours")
                 delay_tasks(tasks, minutes=150)
 
         self.update()
 
-    def task_call(self, task):
+    def task_call(self, task, force_call=True):
         """
         Call another task to run.
 
@@ -378,21 +526,33 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
 
         Args:
             task (str): Task name to call, such as `Restart`
+            force_call (bool):
+
+        Returns:
+            bool: If called.
         """
-        path = f'{task}.Scheduler.NextRun'
-        if deep_get(self.data, keys=path, default=None) is None:
-            raise ScriptError(f'Task to call: `{task}` does not exist in user config')
+        if deep_get(self.data, keys=f"{task}.Scheduler.NextRun", default=None) is None:
+            raise ScriptError(f"Task to call: `{task}` does not exist in user config")
+
+        if force_call or deep_get(
+            self.data, keys=f"{task}.Scheduler.Enable", default=False
+        ):
+            logger.info(f"Task call: {task}")
+            self.modified[f"{task}.Scheduler.NextRun"] = datetime.now().replace(
+                microsecond=0
+            )
+            self.modified[f"{task}.Scheduler.Enable"] = True
+            if self.auto_update:
+                self.update()
+            return True
         else:
-            self.modified[path] = datetime(2021, 1, 1, 0, 0, 0)
-            if task == 'Restart':
-                # Restart is forced to enable
-                self.modified[f'{task}.Scheduler.Enable'] = True
-            self.update()
+            logger.info(f"Task call: {task} (skipped because disabled by user)")
+            return False
 
     @staticmethod
-    def task_stop(message=''):
+    def task_stop(message=""):
         """
-        Stop current task
+        Stop current task.
 
         Raises:
             TaskEnd:
@@ -417,15 +577,15 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         self.load()
         new = self.get_next()
         if prev == new:
-            logger.info(f'Continue task `{new}`')
+            logger.info(f"Continue task `{new}`")
             return False
         else:
-            logger.info(f'Switch task `{prev}` to `{new}`')
+            logger.info(f"Switch task `{prev}` to `{new}`")
             return True
 
-    def check_task_switch(self, message=''):
+    def check_task_switch(self, message=""):
         """
-        Stop current task
+        Stop current task when task switched.
 
         Raises:
             TaskEnd:
@@ -438,11 +598,11 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         """
         Sub-directory name when saving drop record.
         """
-        name = self.Campaign_Name.lower().replace('-', '_')
+        name = self.Campaign_Name.lower().replace("-", "_")
         if name[0].isdigit():
-            name = 'campaign_' + str(name)
-        if self.Campaign_Mode == 'hard':
-            name += '_hard'
+            name = "campaign_" + str(name)
+        if self.Campaign_Mode == "hard":
+            name += "_hard"
         return name
 
     """
@@ -462,7 +622,7 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         config = self
 
         for attr in dir(config):
-            if attr.endswith('__'):
+            if attr.endswith("__"):
                 continue
             if hasattr(other, attr):
                 value = other.__getattribute__(attr)
@@ -470,10 +630,6 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
                     config.__setattr__(attr, value)
 
         return config
-
-    @property
-    def SERVER(self):
-        return self.Emulator_Server
 
     @property
     def DEVICE_SCREENSHOT_METHOD(self):
@@ -510,7 +666,10 @@ class AzurLaneConfig(ConfigUpdater, ManualConfig, GeneratedConfig):
         if self._fleet_boss:
             return self._fleet_boss
         if self.Fleet_Fleet2:
-            if self.Fleet_FleetOrder in ['fleet1_mob_fleet2_boss', 'fleet1_boss_fleet2_mob']:
+            if self.Fleet_FleetOrder in [
+                "fleet1_mob_fleet2_boss",
+                "fleet1_boss_fleet2_mob",
+            ]:
                 return 2
             else:
                 return 1
@@ -586,34 +745,3 @@ class MultiSetWrapper:
         if not self.in_wrapper:
             self.main.update()
             self.main.auto_update = True
-
-
-class ConfigTypeChecker:
-    checkers = [
-        (['Scheduler', 'NextRun'], datetime),
-        (['Emotion', 'Fleet1Record'], datetime),
-        (['Emotion', 'Fleet2Record'], datetime),
-        (['Exercise', 'OpponentRefreshRecord'], datetime),
-    ]
-
-    @classmethod
-    def check(cls, data):
-        """
-        Args:
-            data (dict): User config.
-
-        Raises:
-            RequestHumanTakeover: If there's invalid setting.
-        """
-        for func, func_data in data.items():
-            for path, typ in cls.checkers:
-                value = deep_get(func_data, keys=path, default=None)
-                if value is None:
-                    continue
-                if not isinstance(value, typ):
-                    logger.critical(f'Task `{func}` has an invalid setting {".".join(path)}="{str(value)}". '
-                                    f'Current type: {type_to_str(value)}, expected type: {type_to_str(typ)}')
-                    logger.critical('Please check your settings')
-                    raise RequestHumanTakeover(
-                        f'Task `{func}` has an invalid setting {".".join(path)}="{str(value)}". '
-                        f'Current type: {type_to_str(value)}, expected type: {type_to_str(typ)}')

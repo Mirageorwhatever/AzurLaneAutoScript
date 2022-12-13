@@ -2,13 +2,15 @@ import os
 import queue
 import threading
 from multiprocessing import Process
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from filelock import FileLock
-from module.config.utils import deep_get, filepath_config
+from module.config.utils import filepath_config
 from module.logger import logger, set_file_logger, set_func_logger
-from module.webui.setting import Setting
-from rich.console import ConsoleRenderable
+from module.submodule.submodule import load_mod
+from module.submodule.utils import get_config_mod
+from module.webui.setting import State
+from rich.console import Console, ConsoleRenderable
 
 
 class ProcessManager:
@@ -16,15 +18,17 @@ class ProcessManager:
 
     def __init__(self, config_name: str = "alas") -> None:
         self.config_name = config_name
-        self._renderable_queue: queue.Queue[ConsoleRenderable] = Setting.manager.Queue()
+        self._renderable_queue: queue.Queue[ConsoleRenderable] = State.manager.Queue()
         self.renderables: List[ConsoleRenderable] = []
         self.renderables_max_length = 400
         self.renderables_reduce_length = 80
         self._process: Process = None
         self.thd_log_queue_handler: threading.Thread = None
 
-    def start(self, func: str, ev: threading.Event = None) -> None:
+    def start(self, func, ev: threading.Event = None) -> None:
         if not self.alive:
+            if func is None:
+                func = get_config_mod(self.config_name)
             self._process = Process(
                 target=ProcessManager.run_process,
                 args=(
@@ -88,17 +92,19 @@ class ProcessManager:
             return 1
         elif len(self.renderables) == 0:
             return 2
-        elif isinstance(self.renderables[-1], str):
-            if self.renderables[-1].endswith(
-                "Reason: Manual stop\n"
-            ) or self.renderables[-1].endswith("Reason: Finish\n"):
+        else:
+            console = Console(no_color=True)
+            with console.capture() as capture:
+                console.print(self.renderables[-1])
+            s = capture.get().strip()
+            if s.endswith("Reason: Manual stop"):
                 return 2
-            elif self.renderables[-1].endswith("Reason: Update\n"):
+            elif s.endswith("Reason: Finish"):
+                return 2
+            elif s.endswith("Reason: Update"):
                 return 4
             else:
                 return 3
-        else:
-            return 3
 
     @classmethod
     def get_manager(cls, config_name: str) -> "ProcessManager":
@@ -117,16 +123,12 @@ class ProcessManager:
         set_file_logger(name=config_name)
         set_func_logger(func=q.put)
 
-        # Set server before loading any buttons.
-        import module.config.server as server
         from module.config.config import AzurLaneConfig
 
         AzurLaneConfig.stop_event = e
-        config = AzurLaneConfig(config_name=config_name)
-        server.server = deep_get(config.data, keys="Alas.Emulator.Server", default="cn")
         try:
             # Run alas
-            if func == "Alas":
+            if func == "alas":
                 from alas import AzurLaneAutoScript
 
                 if e is not None:
@@ -152,8 +154,17 @@ class ProcessManager:
                 from module.daemon.game_manager import GameManager
 
                 GameManager(config=config_name, task="GameManager").run()
+            elif func == 'maa':
+                mod = load_mod('maa')
+
+                if e is not None:
+                    mod.set_stop_event(e)
+                mod.loop(config_name)
+            elif func == "MaaCopilot":
+                mod = load_mod('maa')
+                mod.maa_copilot(config_name)
             else:
-                logger.critical("No function matched")
+                logger.critical(f"No function matched: {func}")
             logger.info(f"[{config_name}] exited. Reason: Finish\n")
         except Exception as e:
             logger.exception(e)
@@ -168,26 +179,35 @@ class ProcessManager:
 
     @staticmethod
     def restart_processes(
-        instances: List["ProcessManager"] = None, ev: threading.Event = None
+        instances: List[Union["ProcessManager", str]] = None, ev: threading.Event = None
     ):
         """
         After update and reload, or failed to perform an update,
         restart all alas that running before update
         """
         logger.hr("Restart alas")
-        if not instances:
+        if instances is None:
             instances = []
-            try:
-                with open("./config/reloadalas", mode="r") as f:
-                    for line in f.readlines():
-                        line = line.strip()
-                        instances.append(ProcessManager.get_manager(line))
-            except:
-                pass
 
-        for process in instances:
+        _instances = set()
+
+        for instance in instances:
+            if isinstance(instance, str):
+                _instances.add(ProcessManager.get_manager(instance))
+            elif isinstance(instance, ProcessManager):
+                _instances.add(instance)
+
+        try:
+            with open("./config/reloadalas", mode="r") as f:
+                for line in f.readlines():
+                    line = line.strip()
+                    _instances.add(ProcessManager.get_manager(line))
+        except FileNotFoundError:
+            pass
+
+        for process in _instances:
             logger.info(f"Starting [{process.config_name}]")
-            process.start(func="Alas", ev=ev)
+            process.start(func=get_config_mod(process.config_name), ev=ev)
 
         try:
             os.remove("./config/reloadalas")

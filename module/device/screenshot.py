@@ -9,16 +9,16 @@ from PIL import Image
 
 from module.base.decorator import cached_property
 from module.base.timer import Timer, timer
-from module.base.utils import get_color, save_image, limit_in, image_size
+from module.base.utils import get_color, image_size, limit_in, save_image
 from module.device.method.adb import Adb
-from module.device.method.wsa import WSA
 from module.device.method.ascreencap import AScreenCap
-from module.device.method.uiautomator_2 import Uiautomator2
+from module.device.method.droidcast import DroidCast
+from module.device.method.wsa import WSA
 from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 
-class Screenshot(Adb, WSA, Uiautomator2, AScreenCap):
+class Screenshot(Adb, WSA, DroidCast, AScreenCap):
     _screen_size_checked = False
     _screen_black_checked = False
     _minicap_uninstalled = False
@@ -34,6 +34,7 @@ class Screenshot(Adb, WSA, Uiautomator2, AScreenCap):
             'uiautomator2': self.screenshot_uiautomator2,
             'aScreenCap': self.screenshot_ascreencap,
             'aScreenCap_nc': self.screenshot_ascreencap_nc,
+            'DroidCast': self.screenshot_droidcast,
         }
 
     @timer
@@ -217,7 +218,7 @@ class Screenshot(Adb, WSA, Uiautomator2, AScreenCap):
                         return True
                 logger.info(f'Game running on display {display}')
                 logger.warning('Game not running on display 0, will be restarted')
-                self.app_stop_uiautomator2(self.config.Emulator_PackageName)
+                self.app_stop_uiautomator2()
                 return False
             elif self.config.Emulator_ScreenshotMethod == 'uiautomator2':
                 logger.warning(f'Received pure black screenshots from emulator, color: {color}')
@@ -226,11 +227,16 @@ class Screenshot(Adb, WSA, Uiautomator2, AScreenCap):
                 self._screen_black_checked = False
                 return False
             else:
-                logger.critical(f'Received pure black screenshots from emulator, color: {color}')
-                logger.critical(f'Screenshot method `{self.config.Emulator_ScreenshotMethod}` '
-                                f'may not work on emulator `{self.serial}`')
-                logger.critical('Please use other screenshot methods')
-                raise RequestHumanTakeover
+                logger.warning(f'Received pure black screenshots from emulator, color: {color}')
+                logger.warning(f'Screenshot method `{self.config.Emulator_ScreenshotMethod}` '
+                               f'may not work on emulator `{self.serial}`, or the emulator is not fully started')
+                if self.serial == '127.0.0.1:7555':
+                    if self.config.Emulator_ScreenshotMethod == 'DroidCast':
+                        self.droidcast_stop()
+                    else:
+                        logger.warning('If you are using MuMu X, please set screenshot method to DroidCast')
+                self._screen_black_checked = False
+                return False
         else:
             self._screen_black_checked = True
             return True

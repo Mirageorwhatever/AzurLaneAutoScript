@@ -2,11 +2,11 @@ import os
 
 import imageio
 
-import module.config.server as server
 from module.base.button import Button
 from module.base.decorator import cached_property
 from module.base.resource import Resource
 from module.base.utils import *
+from module.config.server import VALID_SERVER
 from module.map_detection.utils import Points
 
 
@@ -16,13 +16,25 @@ class Template(Resource):
         Args:
             file (dict[str], str): Filepath of template file.
         """
-        self.server = server.server
-        self.file = file[self.server] if isinstance(file, dict) else file
-        self.name = os.path.splitext(os.path.basename(self.file))[0].upper()
-        self.is_gif = os.path.splitext(self.file)[1] == '.gif'
+        self.raw_file = file
         self._image = None
+        self._image_binary = None
 
         self.resource_add(self.file)
+
+    cached = ['file', 'name', 'is_gif']
+
+    @cached_property
+    def file(self):
+        return self.parse_property(self.raw_file)
+
+    @cached_property
+    def name(self):
+        return os.path.splitext(os.path.basename(self.file))[0].upper()
+
+    @cached_property
+    def is_gif(self):
+        return os.path.splitext(self.file)[1] == '.gif'
 
     @property
     def image(self):
@@ -46,11 +58,27 @@ class Template(Resource):
 
         return self._image
 
+    @property
+    def image_binary(self):
+        if self._image_binary is None:
+            if self.is_gif:
+                self._image_binary = []
+                for image in self.image:
+                    image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                    _, image_binary = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+                    self._image_binary.append(image_binary)
+            else:
+                image_gray = cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
+                _, self._image_binary = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+
+        return self._image_binary
+
     @image.setter
     def image(self, value):
         self._image = value
 
     def resource_release(self):
+        super().resource_release()
         self._image = None
 
     def pre_process(self, image):
@@ -70,15 +98,20 @@ class Template(Resource):
         else:
             return self.image.shape[0:2][::-1]
 
-    def match(self, image, similarity=0.85):
+    def match(self, image, scaling=1.0, similarity=0.85):
         """
         Args:
             image:
+            scaling (int, float): Scale the template to match image
             similarity (float): 0 to 1.
 
         Returns:
             bool: If matches.
         """
+        scaling = 1 / scaling
+        if scaling != 1.0:
+            image = cv2.resize(image, None, fx=scaling, fy=scaling)
+
         if self.is_gif:
             for template in self.image:
                 res = cv2.matchTemplate(image, template, cv2.TM_CCOEFF_NORMED)
@@ -91,6 +124,43 @@ class Template(Resource):
 
         else:
             res = cv2.matchTemplate(image, self.image, cv2.TM_CCOEFF_NORMED)
+            _, sim, _, _ = cv2.minMaxLoc(res)
+            # print(self.file, sim)
+            return sim > similarity
+
+    def match_binary(self, image, similarity=0.85):
+        """
+        Use template match after binarization.
+
+        Args:
+            image:
+            similarity (float): 0 to 1.
+
+        Returns:
+            bool: If matches.
+        """
+        if self.is_gif:
+            for template in self.image_binary:
+                # graying
+                image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+                # binarization
+                _, image_binary = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+                # template matching
+                res = cv2.matchTemplate(image_binary, template, cv2.TM_CCOEFF_NORMED)
+                _, sim, _, _ = cv2.minMaxLoc(res)
+                # print(self.file, sim)
+                if sim > similarity:
+                    return True
+
+            return False
+
+        else:
+            # graying
+            image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # binarization
+            _, image_binary = cv2.threshold(image_gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
+            # template matching
+            res = cv2.matchTemplate(image_binary, self.image_binary, cv2.TM_CCOEFF_NORMED)
             _, sim, _, _ = cv2.minMaxLoc(res)
             # print(self.file, sim)
             return sim > similarity
@@ -155,3 +225,17 @@ class Template(Resource):
         # result: np.array([[x0, y0], [x1, y1], ...)
         result = Points(result).group(threshold=threshold)
         return [self._point_to_button(point, image=raw, name=name) for point in result]
+
+    def split_server(self):
+        """
+        Split into 4 server specific buttons.
+
+        Returns:
+            dict[str, Button]:
+        """
+        out = {}
+        for s in VALID_SERVER:
+            out[s] = Template(
+                file=self.parse_property(self.raw_file, s),
+            )
+        return out

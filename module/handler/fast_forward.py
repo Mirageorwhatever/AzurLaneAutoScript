@@ -1,3 +1,5 @@
+import os
+
 from module.base.timer import Timer
 from module.base.utils import color_bar_percentage
 from module.handler.assets import *
@@ -14,6 +16,31 @@ fleet_lock.add_status('off', check_button=FLEET_UNLOCKED)
 auto_search = Switch('Auto_Search', offset=(20, 20))
 auto_search.add_status('on', check_button=AUTO_SEARCH_ON)
 auto_search.add_status('off', check_button=AUTO_SEARCH_OFF)
+
+
+def map_files(event):
+    """
+    Args:
+        event (str): Event name under './campaign'
+
+    Returns:
+        list[str]: List of map files, such as ['sp1', 'sp2', 'sp3']
+    """
+    folder = f'./campaign/{event}'
+
+    if not os.path.exists(folder):
+        logger.warning(f'Map file folder: {folder} does not exist, can not get map files')
+        return []
+
+    files = []
+    for file in os.listdir(folder):
+        name, ext = os.path.splitext(file)
+        if ext != '.py':
+            continue
+        if name == 'campaign_base':
+            continue
+        files.append(name)
+    return files
 
 
 class FastForwardHandler(AutoSearchHandler):
@@ -67,7 +94,13 @@ class FastForwardHandler(AutoSearchHandler):
         self.map_is_100_percent_clear = self.map_clear_percentage > 0.95
         self.map_is_3_stars = self.map_achieved_star_1 and self.map_achieved_star_2 and self.map_achieved_star_3
         self.map_is_threat_safe = self.appear(MAP_GREEN)
-        self.map_has_clear_mode = self.map_is_100_percent_clear and fast_forward.appear(main=self)
+        if self.config.Campaign_Name.lower() == 'sp':
+            # Minor issue here
+            # Using auto_search option because clear mode cannot be detected whether on SP
+            # If user manually turn off auto search, alas can't enable it again
+            self.map_has_clear_mode = auto_search.appear(main=self)
+        else:
+            self.map_has_clear_mode = self.map_is_100_percent_clear and fast_forward.appear(main=self)
 
         # Override config
         if self.map_achieved_star_1:
@@ -76,9 +109,12 @@ class FastForwardHandler(AutoSearchHandler):
         self.config.MAP_CLEAR_ALL_THIS_TIME = self.config.STAR_REQUIRE_3 \
             and not self.__getattribute__(f'map_achieved_star_{self.config.STAR_REQUIRE_3}') \
             and (self.config.StopCondition_MapAchievement in ['map_3_stars', 'threat_safe'])
-        logger.attr('MAP_CLEAR_ALL_THIS_TIME', self.config.MAP_CLEAR_ALL_THIS_TIME)
 
+        self.map_show_info()
+
+    def map_show_info(self):
         # Log
+        logger.attr('MAP_CLEAR_ALL_THIS_TIME', self.config.MAP_CLEAR_ALL_THIS_TIME)
         names = ['map_achieved_star_1', 'map_achieved_star_2', 'map_achieved_star_3',
                  'map_is_100_percent_clear', 'map_is_3_stars',
                  'map_is_threat_safe', 'map_has_clear_mode']
@@ -88,13 +124,6 @@ class FastForwardHandler(AutoSearchHandler):
         text = f'{int(self.map_clear_percentage * 100)}%, ' + text
         logger.attr('Map_info', text)
         logger.attr('StopCondition_MapAchievement', self.config.StopCondition_MapAchievement)
-
-        # Force to disable auto search if StopCondition.MapAchievement is not 'non_stop'
-        if self.config.StopCondition_MapAchievement != 'non_stop' and self.config.Campaign_UseAutoSearch:
-            logger.warning(f'StopCondition.MapAchievement={self.config.StopCondition_MapAchievement} '
-                           f'does not work with auto search. '
-                           f'Auto search will be disabled')
-            self.config.Campaign_UseAutoSearch = False
 
     def handle_fast_forward(self):
         if not self.map_has_clear_mode:
@@ -113,8 +142,13 @@ class FastForwardHandler(AutoSearchHandler):
             self.config.MAP_HAS_MAZE = False
             self.config.MAP_HAS_FORTRESS = False
             self.config.MAP_HAS_BOUNCING_ENEMY = False
+            self.config.MAP_HAS_DECOY_ENEMY = False
             self.map_is_clear_mode = True
-            self.map_is_auto_search = self.config.Campaign_UseAutoSearch
+            if self.config.MAP_CLEAR_ALL_THIS_TIME:
+                logger.info('MAP_CLEAR_ALL_THIS_TIME does not work with auto search, disable auto search temporarily')
+                self.map_is_auto_search = False
+            else:
+                self.map_is_auto_search = self.config.Campaign_UseAutoSearch
             self.map_is_2x_book = self.config.Campaign_Use2xBook
         else:
             # When disable fast forward, MAP_HAS_AMBUSH depends on map settings.
@@ -183,14 +217,14 @@ class FastForwardHandler(AutoSearchHandler):
 
         logger.info('Auto search setting')
         self.fleet_preparation_sidebar_ensure(3)
-        self.auto_search_setting_ensure(self.config.Fleet_AutoSearchFleetOrder)
+        self.auto_search_setting_ensure(self.config.Fleet_FleetOrder)
         if self.config.SUBMARINE:
             self.auto_search_setting_ensure(self.config.Submarine_AutoSearchMode)
         return True
 
     @property
     def is_call_submarine_at_boss(self):
-        return self.config.SUBMARINE and self.config.Submarine_Mode == 'boss_only'
+        return self.config.SUBMARINE and self.config.Submarine_Mode in ['boss_only', 'hunt_and_boss']
 
     def handle_auto_submarine_call_disable(self):
         """
@@ -247,7 +281,8 @@ class FastForwardHandler(AutoSearchHandler):
             name (str):
 
         Returns:
-            str: Name of next stage, or origin name if unable to increase.
+            str: Name of next stage in upper case,
+                or origin name if unable to increase.
         """
         name = name.upper()
         for increase in self.STAGE_INCREASE:
@@ -255,7 +290,19 @@ class FastForwardHandler(AutoSearchHandler):
             if name in increase:
                 index = increase.index(name) + 1
                 if index < len(increase):
-                    return increase[index]
+                    new = increase[index]
+                    # Don't check main stages, assume all exist
+                    # Main stages are named like campaign_7_2, but user inputs 7-2
+                    if self.config.Campaign_Event == 'campaign_main':
+                        return new
+                    # Check if map file exist
+                    existing = map_files(self.config.Campaign_Event)
+                    logger.info(f'Existing files: {existing}')
+                    if new.lower() in existing:
+                        return new
+                    else:
+                        logger.info(f'Stage increase reach end, new map {new} does not exist')
+                        return name
                 else:
                     logger.info('Stage increase reach end')
                     return name
@@ -267,6 +314,7 @@ class FastForwardHandler(AutoSearchHandler):
         Returns:
             bool:
         """
+
         if self.config.StopCondition_MapAchievement == '100_percent_clear':
             if self.map_is_100_percent_clear:
                 return True
@@ -291,8 +339,8 @@ class FastForwardHandler(AutoSearchHandler):
         Disable current task or increase stage.
         """
         if self.config.StopCondition_StageIncrease:
-            prev_stage = self.config.Campaign_Name
-            next_stage = self.campaign_name_increase(prev_stage)
+            prev_stage = self.config.Campaign_Name.upper()
+            next_stage = self.campaign_name_increase(prev_stage).upper()
             if next_stage != prev_stage:
                 logger.info(f'Stage {prev_stage} increases to {next_stage}')
                 self.config.Campaign_Name = next_stage

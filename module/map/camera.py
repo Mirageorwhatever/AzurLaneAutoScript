@@ -2,18 +2,21 @@ import copy
 
 import numpy as np
 
+from module.base.timer import Timer
 from module.base.utils import area_offset
-from module.combat.assets import GET_ITEMS_1
-from module.exception import MapDetectionError, CampaignEnd
-from module.handler.assets import AUTO_SEARCH_MENU_CONTINUE
-from module.handler.assets import GAME_TIPS
+from module.combat.assets import GET_ITEMS_1, GET_ITEMS_1_RYZA
+from module.exception import CampaignEnd, MapDetectionError
+from module.handler.assets import AUTO_SEARCH_MENU_CONTINUE, GAME_TIPS
 from module.logger import logger
 from module.map.map_base import CampaignMap, location2node
 from module.map.map_operation import MapOperation
 from module.map.utils import location_ensure, random_direction
 from module.map_detection.grid import Grid
-from module.map_detection.utils import trapezoid2area, area2corner
+from module.map_detection.utils import area2corner, trapezoid2area
 from module.map_detection.view import View
+from module.os.assets import GLOBE_GOTO_MAP
+from module.os_handler.assets import AUTO_SEARCH_REWARD, PORT_SUPPLY_CHECK
+from module.ui.assets import BACK_ARROW
 
 
 class Camera(MapOperation):
@@ -52,10 +55,11 @@ class Camera(MapOperation):
             self.device.swipe_vector(vector, name=name, box=box, whitelist_area=whitelist, blacklist_area=blacklist)
             self.device.sleep(0.3)
             self.update()
+            return True
         else:
             # Drop swipe
             # self.update(camera=False)
-            pass
+            return False
 
     def map_swipe(self, vector):
         """
@@ -64,6 +68,7 @@ class Camera(MapOperation):
 
         Args:
             vector(tuple): int
+
         Returns:
             bool: if camera moved.
         """
@@ -72,7 +77,7 @@ class Camera(MapOperation):
         self._prev_swipe = vector
         vector = np.array(vector)
         vector = np.array([0.5, 0.5]) - self.view.center_offset + vector
-        self._map_swipe(vector)
+        return self._map_swipe(vector)
 
     def focus_to_grid_center(self, tolerance=None):
         """
@@ -88,8 +93,7 @@ class Camera(MapOperation):
             tolerance = self.config.MAP_GRID_CENTER_TOLERANCE
         if np.any(np.abs(self.view.center_offset - 0.5) > tolerance):
             logger.info('Re-focus to grid center.')
-            self.map_swipe((0, 0))
-            return True
+            return self.map_swipe((0, 0))
 
         return False
 
@@ -97,7 +101,7 @@ class Camera(MapOperation):
         if not hasattr(self, 'view'):
             self.view = View(self.config, grid_class=self.grid_class)
 
-    def update(self, camera=True):
+    def _update(self, camera=True):
         """Update map image
 
         Args:
@@ -112,21 +116,26 @@ class Camera(MapOperation):
         try:
             if not self.is_in_map() \
                     and not self.is_in_strategy_submarine_move():
+                logger.warning('Image to detect is not in_map')
                 raise MapDetectionError('Image to detect is not in_map')
             self.view.load(self.device.image)
         except MapDetectionError as e:
             if self.info_bar_count():
-                logger.info('Perspective error cause by info bar. Waiting.')
+                logger.warning('Perspective error caused by info bar')
                 self.handle_info_bar()
-                return self.update(camera=camera)
+                return False
             elif self.appear(GET_ITEMS_1):
-                logger.warning('Items got. Trying handling mystery.')
+                logger.warning('Perspective error caused by get_items')
                 self.handle_mystery()
-                return self.update(camera=camera)
+                return False
+            elif self.appear(GET_ITEMS_1_RYZA, offset=(20, 20)):
+                logger.warning('Perspective error caused by GET_ITEMS_1_RYZA')
+                self.device.click(GET_ITEMS_1_RYZA)
+                return False
             elif self.handle_story_skip():
-                logger.warning('Perspective error cause by story. Handling.')
+                logger.warning('Perspective error caused by story')
                 self.ensure_no_story(skip_first_screenshot=False)
-                return self.update(camera=camera)
+                return False
             elif self.is_in_stage():
                 logger.warning('Image is in stage')
                 raise CampaignEnd('Image is in stage')
@@ -134,13 +143,35 @@ class Camera(MapOperation):
                 logger.warning('Image is in auto search menu')
                 self.ensure_auto_search_exit()
                 raise CampaignEnd('Image is in auto search menu')
+            elif self.appear(GLOBE_GOTO_MAP, offset=(20, 20)):
+                logger.warning('Image is in OS globe map')
+                self.ui_click(GLOBE_GOTO_MAP, check_button=self.is_in_map, offset=(20, 20),
+                              retry_wait=3, skip_first_screenshot=True)
+                return False
+            elif self.appear(AUTO_SEARCH_REWARD, offset=(50, 50)):
+                logger.warning('Perspective error caused by AUTO_SEARCH_REWARD')
+                if hasattr(self, 'os_auto_search_quit'):
+                    self.os_auto_search_quit()
+                    return False
+                else:
+                    logger.warning('Cannot find method os_auto_search_quit(), use ui_click() instead')
+                    self.ui_click(AUTO_SEARCH_REWARD, check_button=self.is_in_map, offset=(50, 50),
+                                  retry_wait=3, skip_first_screenshot=True)
+                    return False
+            elif 'opsi' in self.config.task.command.lower() and self.handle_popup_confirm('OPSI'):
+                # Always confirm popups in OpSi, same popups in os_map_goto_globe()
+                logger.warning('Perspective error caused by popups')
+                return False
+            elif self.appear(PORT_SUPPLY_CHECK, offset=(20, 20)):
+                logger.warning('Perspective error caused by akashi shop')
+                self.device.click(BACK_ARROW)
+                return False
             elif not self.is_in_map() \
                     and not self.is_in_strategy_submarine_move():
-                logger.warning('Image to detect is not in_map')
-                if self.appear_then_click(GAME_TIPS, offset=(20, 20)):
-                    logger.warning('Game tips found, retrying')
-                    self.device.screenshot()
-                    self.view.load(self.device.image)
+                if self.appear(GAME_TIPS, offset=(20, 20)):
+                    logger.warning('Perspective error caused by game tips')
+                    self.device.click(GAME_TIPS)
+                    return False
                 else:
                     raise e
             elif 'Camera outside map' in str(e):
@@ -185,6 +216,34 @@ class Camera(MapOperation):
         self.show_camera()
 
         self.predict()
+        return True
+
+    def update(self, camera=True, allow_error=False):
+        """
+        Update map image.
+        Wraps the original `update()` method to handle random MapDetectionError
+        which is usually caused by network issues and mistaken clicks.
+
+        Args:
+            camera: True to update camera position and perspective data.
+            allow_error: True to exit when encountered detection error
+        """
+        confirm_timer = Timer(5, count=10).start()
+        while 1:
+            try:
+                success = self._update(camera=camera)
+                if success:
+                    break
+                else:
+                    confirm_timer.reset()
+                    continue
+            except MapDetectionError:
+                if allow_error:
+                    break
+                elif confirm_timer.reached():
+                    raise
+                else:
+                    continue
 
     def predict(self):
         self.view.predict()
@@ -253,9 +312,9 @@ class Camera(MapOperation):
         while 1:
             vector = np.array(location) - self.camera
             swipe = tuple(np.min([np.abs(vector), swipe_limit], axis=0) * np.sign(vector))
-            self.map_swipe(swipe)
+            has_swiped = self.map_swipe(swipe)
 
-            if np.all(np.abs(vector) <= 0):
+            if not has_swiped:
                 break
 
     def full_scan(self, queue=None, must_scan=None, battle_count=0, mystery_count=0, siren_count=0, carrier_count=0,

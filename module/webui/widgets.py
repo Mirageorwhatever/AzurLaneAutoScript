@@ -1,11 +1,14 @@
+import json
 import random
 import string
-from typing import Callable, Dict, Generator, List, Union
+import time
+from typing import TYPE_CHECKING, Any, Callable, Dict, Generator, List, Optional, Union
 
 from module.logger import WEB_THEME, Highlighter, HTMLConsole
+from module.webui.lang import t
 from module.webui.pin import put_checkbox, put_input, put_select, put_textarea
 from module.webui.process_manager import ProcessManager
-from module.webui.setting import Setting
+from module.webui.setting import State
 from module.webui.utils import (
     DARK_TERMINAL_THEME,
     LIGHT_TERMINAL_THEME,
@@ -13,9 +16,14 @@ from module.webui.utils import (
     Switch,
 )
 from pywebio.exceptions import SessionException
+from pywebio.io_ctrl import Output
 from pywebio.output import *
-from pywebio.session import eval_js, run_js
+from pywebio.pin import pin
+from pywebio.session import eval_js, local, run_js
 from rich.console import ConsoleRenderable
+
+if TYPE_CHECKING:
+    from module.webui.app import AlasGUI
 
 
 class ScrollableCode:
@@ -85,7 +93,7 @@ class RichLog:
         # self._callback_thread = None
         # self._width = 80
         self.keep_bottom = True
-        if Setting.theme == "dark":
+        if State.theme == "dark":
             self.terminal_theme = DARK_TERMINAL_THEME
         else:
             self.terminal_theme = LIGHT_TERMINAL_THEME
@@ -263,7 +271,7 @@ def put_icon_buttons(
     icon_html: str,
     buttons: List[Dict[str, str]],
     onclick: Union[List[Callable[[], None]], Callable[[], None]],
-):
+) -> Output:
     value = buttons[0]["value"]
     return put_column(
         [
@@ -276,146 +284,184 @@ def put_icon_buttons(
     )
 
 
-# args input widget
-def put_input_(
-    name: str,
-    title: str,
-    help: str = None,
-    value: str = "",
-    readonly: bool = None,
-    **other_html_attrs,
-):
-    if help:
-        left = put_column(
-            [
-                put_text(title).style("--arg-title--"),
-                put_text(help).style("--arg-help--"),
-            ],
-            size="auto 1fr",
-        )
-    else:
-        left = put_text(title).style("--arg-title--")
-
-    return put_row(
-        [
-            left,
-            put_input(name, value=value, readonly=readonly, **other_html_attrs).style(
-                "--input--"
-            ),
-        ]
-    ).style("container-args-row")
-
-
-def put_select_(
-    name: str,
-    title: str,
-    help: str = None,
-    options: List[str] = None,
-    **other_html_attrs,
-):
-    if options is None:
-        options = []
-    if help:
-        left = put_column(
-            [
-                put_text(title).style("--arg-title--"),
-                put_text(help).style("--arg-help--"),
-            ],
-            size="auto 1fr",
-        )
-    else:
-        left = put_text(title).style("--arg-title--")
-
-    return put_row(
-        [
-            left,
-            put_select(name, options=options, **other_html_attrs).style("--input--"),
-        ]
-    ).style("container-args-row")
-
-
-def put_textarea_(
-    name: str,
-    title: str,
-    help: str = None,
-    value: str = "",
-    readonly: bool = None,
-    **other_html_attrs,
-):
-    if help:
-        return put_column(
-            [
-                put_text(title).style("--arg-title--"),
-                put_text(help).style("--arg-help--"),
-                put_textarea(
-                    name,
-                    value=value,
-                    readonly=readonly,
-                    code={"lineWrapping": True, "lineNumbers": False},
-                    **other_html_attrs,
-                ),
-            ],
-            size="auto auto auto",
-        ).style("container-args-column")
-    else:
-        return put_column(
-            [
-                put_text(title).style("--arg-title--"),
-                put_textarea(
-                    name,
-                    value=value,
-                    readonly=readonly,
-                    code={"lineWrapping": True, "lineNumbers": False},
-                    **other_html_attrs,
-                ),
-            ],
-            size="auto auto",
-        ).style("container-args-column")
-
-
-def put_checkbox_(
-    name: str, title: str, help: str = None, value: bool = False, **other_html_attrs
-):
-    # Not real checkbox, use as a switch (on/off)
-    if help:
-        left = put_column(
-            [
-                put_text(title).style("--arg-title--"),
-                put_text(help).style("--arg-help--"),
-            ],
-            size="auto 1fr",
-        )
-    else:
-        left = put_text(title).style("--arg-title--")
-
-    return put_row(
-        [
-            left,
-            put_checkbox(
-                name,
-                options=[{"label": "", "value": True, "selected": value}],
-                **other_html_attrs,
-            ).style("text-align: center"),
-        ]
-    ).style("container-large.args")
-
-
-def put_none():
+def put_none() -> Output:
     return put_html("<div></div>")
 
 
-def get_output(
-    arg_type, name, title, arg_help=None, value=None, options=None, **other_html_attrs
-):
-    if arg_type == "input":
-        return put_input_(name, title, arg_help, value, **other_html_attrs)
-    elif arg_type == "select":
-        return put_select_(name, title, arg_help, options, **other_html_attrs)
-    elif arg_type == "textarea":
-        return put_textarea_(name, title, arg_help, value, **other_html_attrs)
-    elif arg_type == "checkbox":
-        return put_checkbox_(name, title, arg_help, value, **other_html_attrs)
-    elif arg_type == "disable":
-        return put_input_(
-            name, title, arg_help, value, readonly=True, **other_html_attrs
+T_Output_Kwargs = Dict[str, Union[str, Dict[str, Any]]]
+
+
+def get_title_help(kwargs: T_Output_Kwargs) -> Output:
+    title: str = kwargs.get("title")
+    help_text: str = kwargs.get("help")
+
+    if help_text:
+        res = put_column(
+            [
+                put_text(title).style("--arg-title--"),
+                put_text(help_text).style("--arg-help--"),
+            ],
+            size="auto 1fr",
         )
+    else:
+        res = put_text(title).style("--arg-title--")
+
+    return res
+
+
+# args input widget
+def put_arg_input(kwargs: T_Output_Kwargs) -> Output:
+    name: str = kwargs["name"]
+    options: List = kwargs.get("options")
+    if options is not None:
+        kwargs.setdefault("datalist", options)
+
+    return put_scope(
+        f"arg_container-input-{name}",
+        [
+            get_title_help(kwargs),
+            put_input(**kwargs).style("--input--"),
+        ],
+    )
+
+
+def put_arg_select(kwargs: T_Output_Kwargs) -> Output:
+    name: str = kwargs["name"]
+    value: str = kwargs["value"]
+    options: List[str] = kwargs["options"]
+    options_label: List[str] = kwargs.pop("options_label", [])
+    disabled: bool = kwargs.pop("disabled", False)
+    _: str = kwargs.pop("invalid_feedback", None)
+
+    option = []
+    if options:
+        for opt, label in zip(options, options_label):
+            o = {"label": label, "value": opt}
+            if value == opt:
+                o["selected"] = True
+            else:
+                o["disabled"] = disabled
+            option.append(o)
+    kwargs["options"] = option
+
+    return put_scope(
+        f"arg_container-select-{name}",
+        [
+            get_title_help(kwargs),
+            put_select(**kwargs).style("--input--"),
+        ],
+    )
+
+
+def put_arg_textarea(kwargs: T_Output_Kwargs) -> Output:
+    name: str = kwargs["name"]
+    mode: str = kwargs.pop("mode", None)
+    kwargs.setdefault(
+        "code", {"lineWrapping": True, "lineNumbers": False, "mode": mode}
+    )
+
+    return put_scope(
+        f"arg_contianer-textarea-{name}",
+        [
+            get_title_help(kwargs),
+            put_textarea(**kwargs),
+        ],
+    )
+
+
+def put_arg_checkbox(kwargs: T_Output_Kwargs) -> Output:
+    # Not real checkbox, use as a switch (on/off)
+    name: str = kwargs["name"]
+    value: str = kwargs["value"]
+    _: str = kwargs.pop("invalid_feedback", None)
+
+    kwargs["options"] = [{"label": "", "value": True, "selected": value}]
+    return put_scope(
+        f"arg_container-checkbox-{name}",
+        [
+            get_title_help(kwargs),
+            put_checkbox(**kwargs).style("text-align: center"),
+        ],
+    )
+
+
+def put_arg_datetime(kwargs: T_Output_Kwargs) -> Output:
+    name: str = kwargs["name"]
+    return put_scope(
+        f"arg_container-datetime-{name}",
+        [
+            get_title_help(kwargs),
+            put_input(**kwargs).style("--input--"),
+        ],
+    )
+
+
+def put_arg_storage(kwargs: T_Output_Kwargs) -> Optional[Output]:
+    name: str = kwargs["name"]
+    if kwargs["value"] == {}:
+        return None
+
+    kwargs["value"] = json.dumps(
+        kwargs["value"], indent=2, ensure_ascii=False, sort_keys=False, default=str
+    )
+    kwargs.setdefault(
+        "code", {"lineWrapping": True, "lineNumbers": False, "mode": "json"}
+    )
+
+    def clear_callback():
+        alasgui: "AlasGUI" = local.gui
+        alasgui.modified_config_queue.put(
+            {"name": ".".join(name.split("_")), "value": {}}
+        )
+        # https://github.com/pywebio/PyWebIO/issues/459
+        # pin[name] = "{}"
+
+    return put_scope(
+        f"arg_container-storage-{name}",
+        [
+            put_textarea(**kwargs),
+            put_html(
+                f'<button class="btn btn-outline-warning btn-block">{t("Gui.Text.Clear")}</button>'
+            ).onclick(clear_callback),
+        ],
+    )
+
+
+_widget_type_to_func: Dict[str, Callable] = {
+    "input": put_arg_input,
+    "lock": put_arg_input,
+    "datetime": put_arg_input,  # TODO
+    "select": put_arg_select,
+    "textarea": put_arg_textarea,
+    "checkbox": put_arg_checkbox,
+    "storage": put_arg_storage,
+}
+
+
+def put_output(output_kwargs: T_Output_Kwargs) -> Optional[Output]:
+    return _widget_type_to_func[output_kwargs["widget_type"]](output_kwargs)
+
+
+def get_loading_style(shape: str, fill: bool) -> str:
+    if fill:
+        return f"--loading-{shape}-fill--"
+    else:
+        return f"--loading-{shape}--"
+
+
+def put_loading_text(
+    text: str,
+    shape: str = "border",
+    color: str = "dark",
+    fill: bool = False,
+    size: str = "auto 2px 1fr",
+):
+    loading_style = get_loading_style(shape=shape, fill=fill)
+    return put_row(
+        [
+            put_loading(shape=shape, color=color).style(loading_style),
+            None,
+            put_text(text),
+        ],
+        size=size,
+    )

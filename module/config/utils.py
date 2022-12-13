@@ -5,10 +5,11 @@ import string
 from datetime import datetime, timedelta, timezone
 
 import yaml
-from atomicwrites import atomic_write
 from filelock import FileLock
 
-import module.config.server as server
+import module.config.server as server_
+from module.config.atomicwrites import atomic_write
+from module.submodule.utils import *
 
 LANGUAGES = ['zh-CN', 'en-US', 'ja-JP', 'zh-TW']
 SERVER_TO_LANG = {
@@ -19,11 +20,12 @@ SERVER_TO_LANG = {
 }
 LANG_TO_SERVER = {v: k for k, v in SERVER_TO_LANG.items()}
 SERVER_TO_TIMEZONE = {
-    'cn': 8,
-    'en': -7,
-    'jp': 9,
-    'tw': 8,
+    'cn': timedelta(hours=8),
+    'en': timedelta(hours=-7),
+    'jp': timedelta(hours=9),
+    'tw': timedelta(hours=8),
 }
+DEFAULT_TIME = datetime(2020, 1, 1, 0, 0)
 
 
 # https://stackoverflow.com/questions/8640959/how-can-i-control-what-scalar-form-pyyaml-uses-for-my-data/15423007
@@ -37,20 +39,29 @@ yaml.add_representer(str, str_presenter)
 yaml.representer.SafeRepresenter.add_representer(str, str_presenter)
 
 
-def filepath_args(filename='args'):
-    return f'./module/config/argument/{filename}.json'
+def filepath_args(filename='args', mod_name='alas'):
+    if mod_name == 'alas':
+        return f'./module/config/argument/{filename}.json'
+    else:
+        return os.path.join(filepath_mod(mod_name), f'./module/config/argument/{filename}.json')
 
 
 def filepath_argument(filename):
     return f'./module/config/argument/{filename}.yaml'
 
 
-def filepath_i18n(lang):
-    return os.path.join('./module/config/i18n', f'{lang}.json')
+def filepath_i18n(lang, mod_name='alas'):
+    if mod_name == 'alas':
+        return os.path.join('./module/config/i18n', f'{lang}.json')
+    else:
+        return os.path.join(filepath_mod(mod_name), './module/config/i18n', f'{lang}.json')
 
 
-def filepath_config(filename):
-    return os.path.join('./config', f'{filename}.json')
+def filepath_config(filename, mod_name='alas'):
+    if mod_name == 'alas':
+        return os.path.join('./config', f'{filename}.json')
+    else:
+        return os.path.join('./config', f'{filename}.{mod_name}.json')
 
 
 def filepath_code():
@@ -112,7 +123,7 @@ def write_file(file, data):
     with lock:
         print(f'write: {file}')
         if ext == '.yaml':
-            with atomic_write(file, overwrite=True, encoding='utf-8') as f:
+            with atomic_write(file, overwrite=True, encoding='utf-8', newline='') as f:
                 if isinstance(data, list):
                     yaml.safe_dump_all(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                        sort_keys=False)
@@ -120,7 +131,7 @@ def write_file(file, data):
                     yaml.safe_dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True,
                                    sort_keys=False)
         elif ext == '.json':
-            with atomic_write(file, overwrite=True, encoding='utf-8') as f:
+            with atomic_write(file, overwrite=True, encoding='utf-8', newline='') as f:
                 s = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=False, default=str)
                 f.write(s)
         else:
@@ -141,14 +152,30 @@ def iter_folder(folder, is_dir=False, ext=None):
         sub = os.path.join(folder, file)
         if is_dir:
             if os.path.isdir(sub):
-                yield sub
+                yield sub.replace('\\\\', '/').replace('\\', '/')
         elif ext is not None:
             if not os.path.isdir(sub):
                 _, extension = os.path.splitext(file)
                 if extension == ext:
-                    yield os.path.join(folder, file)
+                    yield os.path.join(folder, file).replace('\\\\', '/').replace('\\', '/')
         else:
-            yield os.path.join(folder, file)
+            yield os.path.join(folder, file).replace('\\\\', '/').replace('\\', '/')
+
+
+def alas_template():
+    """
+        Returns:
+            list[str]: Name of all Alas instances, except `template`.
+        """
+    out = []
+    for file in os.listdir('./config'):
+        name, extension = os.path.splitext(file)
+        if name == 'template' and extension == '.json':
+            out.append(f'{name}-alas')
+
+    out.extend(mod_template())
+
+    return out
 
 
 def alas_instance():
@@ -159,8 +186,12 @@ def alas_instance():
     out = []
     for file in os.listdir('./config'):
         name, extension = os.path.splitext(file)
-        if name != 'template' and extension == '.json':
+        config_name, mod_name = os.path.splitext(name)
+        mod_name = mod_name[1:]
+        if name != 'template' and extension == '.json' and mod_name == '':
             out.append(name)
+
+    out.extend(mod_instance())
 
     if not len(out):
         out = ['alas']
@@ -204,6 +235,22 @@ def deep_set(d, keys, value):
         d = {}
     d[keys[0]] = deep_set(d.get(keys[0], {}), keys[1:], value)
     return d
+
+
+def deep_pop(d, keys, default=None):
+    """
+    Pop value from dictionary safely, imitating deep_get().
+    """
+    if isinstance(keys, str):
+        keys = keys.split('.')
+    assert type(keys) is list
+    if not isinstance(d, dict):
+        return default
+    if not keys:
+        return default
+    elif len(keys) == 1:
+        return d.pop(keys[0], default)
+    return deep_pop(d.get(keys[0]), keys[1:], default)
 
 
 def deep_default(d, keys, value):
@@ -349,8 +396,18 @@ def dict_to_kv(dictionary, allow_none=True):
     return ', '.join([f'{k}={repr(v)}' for k, v in dictionary.items() if allow_none or v is not None])
 
 
-def server_timezone():
-    return SERVER_TO_TIMEZONE.get(server.server, 8)
+def server_timezone() -> timedelta:
+    return SERVER_TO_TIMEZONE.get(server_.server, SERVER_TO_TIMEZONE['cn'])
+
+
+def server_time_offset() -> timedelta:
+    """
+    To convert local time to server time:
+        server_time = local_time + server_time_offset()
+    To convert server time to local time:
+        local_time = server_time - server_time_offset()
+    """
+    return datetime.now(timezone.utc).astimezone().utcoffset() - server_timezone()
 
 
 def random_normal_distribution_int(a, b, n=3):
@@ -413,13 +470,12 @@ def get_os_next_reset():
     Returns:
         datetime.datetime
     """
-    d = datetime.now(timezone.utc).astimezone()
-    diff = d.utcoffset() // timedelta(seconds=1) // 3600 - server_timezone()
-    now = datetime.now() - timedelta(hours=diff)
-    reset = (now.replace(day=1) + timedelta(days=32)) \
+    diff = server_time_offset()
+    server_now = datetime.now() - diff
+    server_reset = (server_now.replace(day=1) + timedelta(days=32)) \
         .replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    reset += timedelta(hours=diff)
-    return reset
+    local_reset = server_reset + diff
+    return local_reset
 
 
 def get_os_reset_remain():
@@ -448,14 +504,15 @@ def get_server_next_update(daily_trigger):
     """
     if isinstance(daily_trigger, str):
         daily_trigger = daily_trigger.replace(' ', '').split(',')
-    d = datetime.now(timezone.utc).astimezone()
-    diff = d.utcoffset() // timedelta(seconds=1) // 3600 - server_timezone()
+
+    diff = server_time_offset()
+    local_now = datetime.now()
     trigger = []
     for t in daily_trigger:
         h, m = [int(x) for x in t.split(':')]
-        h = (h + diff) % 24
-        future = datetime.now().replace(hour=h, minute=m, second=0, microsecond=0)
-        future = future + timedelta(days=1) if future < datetime.now() else future
+        future = local_now.replace(hour=h, minute=m, second=0, microsecond=0) + diff
+        s = (future - local_now).total_seconds() % 86400
+        future = local_now + timedelta(seconds=s)
         trigger.append(future)
     update = sorted(trigger)[0]
     return update
@@ -471,16 +528,17 @@ def get_server_last_update(daily_trigger):
     """
     if isinstance(daily_trigger, str):
         daily_trigger = daily_trigger.replace(' ', '').split(',')
-    d = datetime.now(timezone.utc).astimezone()
-    diff = d.utcoffset() // timedelta(seconds=1) // 3600 - server_timezone()
+
+    diff = server_time_offset()
+    local_now = datetime.now()
     trigger = []
     for t in daily_trigger:
         h, m = [int(x) for x in t.split(':')]
-        h = (h + diff) % 24
-        past = datetime.now().replace(hour=h, minute=m, second=0, microsecond=0)
-        past = past - timedelta(days=1) if past > datetime.now() else past
-        trigger.append(past)
-    update = sorted(trigger, reverse=True)[0]
+        future = local_now.replace(hour=h, minute=m, second=0, microsecond=0) + diff
+        s = (future - local_now).total_seconds() % 86400 - 86400
+        future = local_now + timedelta(seconds=s)
+        trigger.append(future)
+    update = sorted(trigger)[-1]
     return update
 
 
@@ -504,6 +562,32 @@ def nearest_future(future, interval=120):
             next_run = finish
 
     return next_run
+
+
+def get_nearest_weekday_date(target):
+    """
+    Get nearest weekday date starting
+    from current date
+
+    Args:
+        target (int): target weekday to
+                      calculate
+
+    Returns:
+        datetime.datetime
+    """
+    diff = server_time_offset()
+    server_now = datetime.now() - diff
+
+    days_ahead = target - server_now.weekday()
+    if days_ahead <= 0:
+        # Target day has already happened
+        days_ahead += 7
+    server_reset = (server_now + timedelta(days=days_ahead)) \
+        .replace(hour=0, minute=0, second=0, microsecond=0)
+
+    local_reset = server_reset + diff
+    return local_reset
 
 
 def random_id(length=32):

@@ -1,11 +1,12 @@
 import asyncio
+import filecmp
 import os
 import re
+import shutil
 import subprocess
 import winreg
-import shutil
-import filecmp
 
+from deploy.logger import logger
 from deploy.utils import cached_property
 
 asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
@@ -13,6 +14,7 @@ asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 class VirtualBoxEmulator:
     UNINSTALL_REG = "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
+    UNINSTALL_REG_2 = "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall"
 
     def __init__(self, name, root_path, adb_path, vbox_path, vbox_name):
         """
@@ -38,13 +40,51 @@ class VirtualBoxEmulator:
         Raises:
             FileNotFoundError: If emulator not installed.
         """
-        reg = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, f'{self.UNINSTALL_REG}\\{self.name}', 0)
+        if self.name == 'LDPlayer4':
+            root = self.get_install_dir_from_reg('SOFTWARE\\leidian\\ldplayer', 'InstallDir')
+            if root is not None:
+                return root
+        if self.name == 'LDPlayer9':
+            root = self.get_install_dir_from_reg('SOFTWARE\\leidian\\ldplayer9', 'InstallDir')
+            if root is not None:
+                return root
+
+        try:
+            reg = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, f'{self.UNINSTALL_REG}\\{self.name}', 0)
+        except FileNotFoundError:
+            reg = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, f'{self.UNINSTALL_REG_2}\\{self.name}', 0)
         res = winreg.QueryValueEx(reg, 'UninstallString')[0]
 
         file = re.search('"(.*?)"', res)
         file = file.group(1) if file else res
         root = os.path.abspath(os.path.join(os.path.dirname(file), self.root_path))
         return root
+
+    def get_install_dir_from_reg(self, path, key):
+        """
+        Args:
+            path (str): f'SOFTWARE\\leidian\\ldplayer'
+            key (str): 'InstallDir'
+
+        Returns:
+            str: Installation dir or None
+        """
+        try:
+            reg = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, path, 0)
+            root = winreg.QueryValueEx(reg, key)[0]
+            if os.path.exists(root):
+                return root
+        except FileNotFoundError:
+            pass
+        try:
+            reg = winreg.OpenKey(winreg.HKEY_CURRENT_USER, path, 0)
+            root = winreg.QueryValueEx(reg, key)[0]
+            if os.path.exists(root):
+                return root
+        except FileNotFoundError:
+            pass
+
+        return None
 
     @cached_property
     def adb_binary(self):
@@ -78,7 +118,7 @@ class VirtualBoxEmulator:
 
         serial = []
         for file in vbox:
-            with open(file, 'r') as f:
+            with open(file, 'r', encoding='utf-8', errors='ignore') as f:
                 for line in f.readlines():
                     # <Forwarding name="port2" proto="1" hostip="127.0.0.1" hostport="62026" guestport="5555"/>
                     res = re.search('<*?hostport="(.*?)".*?guestport="5555"/>', line)
@@ -96,31 +136,31 @@ class VirtualBoxEmulator:
             adb (str): Absolute path to adb.exe
         """
         for ori, bak in zip(self.adb_binary, self.adb_backup):
-            print(f'Replacing {ori}')
+            logger.info(f'Replacing {ori}')
             if os.path.exists(ori):
                 if filecmp.cmp(adb, ori, shallow=True):
-                    print(f'{adb} is same as {ori}, skip')
+                    logger.info(f'{adb} is same as {ori}, skip')
                 else:
-                    print(f'{ori} -----> {bak}')
+                    logger.info(f'{ori} -----> {bak}')
                     shutil.move(ori, bak)
-                    print(f'{adb} -----> {ori}')
+                    logger.info(f'{adb} -----> {ori}')
                     shutil.copy(adb, ori)
             else:
-                print(f'{ori} not exists, skip')
+                logger.info(f'{ori} not exists, skip')
 
     def adb_recover(self):
         """ Revert adb replacement """
         for ori in self.adb_binary:
-            print(f'Recovering {ori}')
+            logger.info(f'Recovering {ori}')
             bak = f'{ori}.bak'
             if os.path.exists(bak):
-                print(f'Delete {ori}')
+                logger.info(f'Delete {ori}')
                 if os.path.exists(ori):
                     os.remove(ori)
-                print(f'{bak} -----> {ori}')
+                logger.info(f'{bak} -----> {ori}')
                 shutil.move(bak, ori)
             else:
-                print(f'Not exists {bak}, skip')
+                logger.info(f'Not exists {bak}, skip')
 
 
 # NoxPlayer 夜神模拟器
@@ -153,6 +193,13 @@ ld_player_4 = VirtualBoxEmulator(
     vbox_path="./vms",
     vbox_name='.*.vbox$'
 )
+ld_player_9 = VirtualBoxEmulator(
+    name="LDPlayer9",
+    root_path=".",
+    adb_path="./adb.exe",
+    vbox_path="./vms",
+    vbox_name='.*.vbox$'
+)
 # MemuPlayer 逍遥模拟器
 memu_player = VirtualBoxEmulator(
     name="MEmu",
@@ -177,6 +224,7 @@ class EmulatorConnect:
         nox_player_64,
         ld_player,
         ld_player_4,
+        ld_player_9,
         memu_player,
         mumu_player
     ]
@@ -184,11 +232,28 @@ class EmulatorConnect:
     def __init__(self, adb='adb.exe'):
         self.adb_binary = adb
 
-    def _execute(self, cmd):
-        print(' '.join(cmd))
+    def _execute(self, cmd, timeout=10, output=True):
+        """
+        Returns:
+            Object: Stdout(str) of cmd if output,
+                    return code(int) of cmd if not output.
+        """
+        if not output:
+            cmd.extend(['>nul', '2>nul'])
+        logger.info(' '.join(cmd))
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-        stdout, stderr = process.communicate(timeout=10)
-        return stdout
+        try:
+            stdout, stderr = process.communicate(timeout=timeout)
+            ret_code = process.returncode
+        except subprocess.TimeoutExpired:
+            process.kill()
+            stdout, stderr = process.communicate()
+            ret_code = 1
+            logger.info(f'TimeoutExpired, stdout={stdout}, stderr={stderr}')
+        if output:
+            return stdout
+        else:
+            return ret_code
 
     @cached_property
     def emulators(self):
@@ -204,7 +269,7 @@ class EmulatorConnect:
             except FileNotFoundError:
                 continue
             if len(serial):
-                print(f'Emulator {emulator.name} found, instances: {serial}')
+                logger.info(f'Emulator {emulator.name} found, instances: {serial}')
 
         return emulators
 
@@ -222,7 +287,7 @@ class EmulatorConnect:
             if status == 'device':
                 devices.append(serial)
 
-        print(f'Devices: {devices}')
+        logger.info(f'Devices: {devices}')
         return devices
 
     def adb_kill(self):
@@ -230,7 +295,7 @@ class EmulatorConnect:
         # self._execute([self.adb_binary, 'kill-server'])
 
         # Just kill it, because some adb don't obey.
-        print('Kill all known ADB')
+        logger.info('Kill all known ADB')
         for exe in [
             # Most emulator use this
             'adb.exe',
@@ -241,7 +306,13 @@ class EmulatorConnect:
             # Bluestacks 蓝叠模拟器
             'HD-Adb.exe'
         ]:
-            self._execute(['taskkill', '/f', '/im', exe])
+            ret_code = self._execute(['taskkill', '/f', '/im', exe], output=False)
+            if ret_code == 0:
+                logger.info(f'Task {exe} killed')
+            elif ret_code == 128:
+                logger.info(f'Task {exe} not found')
+            else:
+                logger.info(f'Error occurred when killing task {exe}, return code {ret_code}')
 
     @cached_property
     def serial(self):
@@ -298,4 +369,4 @@ class EmulatorConnect:
 
 if __name__ == '__main__':
     emu = EmulatorConnect()
-    print(emu.brute_force_connect())
+    logger.info(emu.brute_force_connect())

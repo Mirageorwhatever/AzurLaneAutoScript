@@ -54,17 +54,13 @@
       "name": "Task.Main.name",
       "help": "Task.Main.help"
     },
-    "C72MysteryFarming": {
-      "name": "Task.C72MysteryFarming.name",
-      "help": "Task.C72MysteryFarming.help"
+    "Main2": {
+      "name": "Task.Main2.name",
+      "help": "Task.Main2.help"
     },
-    "C122MediumLeveling": {
-      "name": "Task.C122MediumLeveling.name",
-      "help": "Task.C122MediumLeveling.help"
-    },
-    "C124LargeLeveling": {
-      "name": "Task.C124LargeLeveling.name",
-      "help": "Task.C124LargeLeveling.help"
+    "Main3": {
+      "name": "Task.Main3.name",
+      "help": "Task.Main3.help"
     },
     "GemsFarming": {
       "name": "Task.GemsFarming.name",
@@ -78,13 +74,25 @@
       "name": "Task.Event.name",
       "help": "Task.Event.help"
     },
-    "EventAb": {
-      "name": "Task.EventAb.name",
-      "help": "Task.EventAb.help"
+    "Event2": {
+      "name": "Task.Event2.name",
+      "help": "Task.Event2.help"
     },
-    "EventCd": {
-      "name": "Task.EventCd.name",
-      "help": "Task.EventCd.help"
+    "EventA": {
+      "name": "Task.EventA.name",
+      "help": "Task.EventA.help"
+    },
+    "EventB": {
+      "name": "Task.EventB.name",
+      "help": "Task.EventB.help"
+    },
+    "EventC": {
+      "name": "Task.EventC.name",
+      "help": "Task.EventC.help"
+    },
+    "EventD": {
+      "name": "Task.EventD.name",
+      "help": "Task.EventD.help"
     },
     "EventSp": {
       "name": "Task.EventSp.name",
@@ -146,21 +154,9 @@
       "name": "Task.Gacha.name",
       "help": "Task.Gacha.help"
     },
-    "DataKey": {
-      "name": "Task.DataKey.name",
-      "help": "Task.DataKey.help"
-    },
-    "SupplyPack": {
-      "name": "Task.SupplyPack.name",
-      "help": "Task.SupplyPack.help"
-    },
-    "BattlePass": {
-      "name": "Task.BattlePass.name",
-      "help": "Task.BattlePass.help"
-    },
-    "MetaReward": {
-      "name": "Task.MetaReward.name",
-      "help": "Task.MetaReward.help"
+    "Freebies": {
+      "name": "Task.Freebies.name",
+      "help": "Task.Freebies.help"
     },
     "Daily": {
       "name": "Task.Daily.name",
@@ -186,6 +182,10 @@
       "name": "Task.OpsiGeneral.name",
       "help": "Task.OpsiGeneral.help"
     },
+    "OpsiAshBeacon": {
+      "name": "Task.OpsiAshBeacon.name",
+      "help": "Task.OpsiAshBeacon.help"
+    },
     "OpsiAshAssist": {
       "name": "Task.OpsiAshAssist.name",
       "help": "Task.OpsiAshAssist.help"
@@ -197,6 +197,10 @@
     "OpsiShop": {
       "name": "Task.OpsiShop.name",
       "help": "Task.OpsiShop.help"
+    },
+    "OpsiVoucher": {
+      "name": "Task.OpsiVoucher.name",
+      "help": "Task.OpsiVoucher.help"
     },
     "OpsiDaily": {
       "name": "Task.OpsiDaily.name",
@@ -210,6 +214,10 @@
       "name": "Task.OpsiAbyssal.name",
       "help": "Task.OpsiAbyssal.help"
     },
+    "OpsiArchive": {
+      "name": "Task.OpsiArchive.name",
+      "help": "Task.OpsiArchive.help"
+    },
     "OpsiStronghold": {
       "name": "Task.OpsiStronghold.name",
       "help": "Task.OpsiStronghold.help"
@@ -217,6 +225,14 @@
     "OpsiMeowfficerFarming": {
       "name": "Task.OpsiMeowfficerFarming.name",
       "help": "Task.OpsiMeowfficerFarming.help"
+    },
+    "OpsiHazard1Leveling": {
+      "name": "Task.OpsiHazard1Leveling.name",
+      "help": "Task.OpsiHazard1Leveling.help"
+    },
+    "OpsiCrossMonth": {
+      "name": "Task.OpsiCrossMonth.name",
+      "help": "Task.OpsiCrossMonth.help"
     },
     "Daemon": {
       "name": "Task.Daemon.name",
@@ -280,15 +296,91 @@
     },
     "PackageName": {
       "name": "Emulator.PackageName.name",
-      "help": "Emulator.PackageName.help"
+      "help": "Emulator.PackageName.help",
+      "auto": "auto",
+      "com.bilibili.azurlane": "CN",
+      "com.YoStarEN.AzurLane": "EN",
+      "com.YoStarJP.AzurLane": "JP",
+      "com.hkmanjuu.azurlane.gp": "TW",
+      "com.bilibili.blhx.huawei": "CN com.bilibili.blhx.huawei",
+      "com.bilibili.blhx.mi": "CN com.bilibili.blhx.mi",
+      "com.tencent.tmgp.bilibili.blhx": "CN com.tencent.tmgp.bilibili.blhx",
+      "com.bilibili.blhx.baidu": "CN com.bilibili.blhx.baidu",
+      "com.bilibili.blhx.qihoo": "CN com.bilibili.blhx.qihoo",
+      "com.bilibili.blhx.nearme.gamecenter": "CN com.bilibili.blhx.nearme.gamecenter",
+      "com.bilibili.blhx.vivo": "CN com.bilibili.blhx.vivo",
+      "com.bilibili.blhx.mz": "CN com.bilibili.blhx.mz",
+      "com.bilibili.blhx.uc": "CN com.bilibili.blhx.uc",
+      "com.bilibili.blhx.mzw": "CN com.bilibili.blhx.mzw",
+      "com.yiwu.blhx.yx15": "CN com.yiwu.blhx.yx15",
+      "com.bilibili.blhx.m4399": "CN com.bilibili.blhx.m4399",
+      "com.hkmanjuu.azurlane.gp.mc": "TW com.hkmanjuu.azurlane.gp.mc"
     },
-    "Server": {
-      "name": "Emulator.Server.name",
-      "help": "Emulator.Server.help",
-      "cn": "cn",
-      "en": "en",
-      "jp": "jp",
-      "tw": "tw"
+    "ServerName": {
+      "name": "Emulator.ServerName.name",
+      "help": "Emulator.ServerName.help",
+      "disabled": "disabled",
+      "cn_android-0": "[国服] 莱茵演习",
+      "cn_android-1": "[国服] 巴巴罗萨",
+      "cn_android-2": "[国服] 霸王行动",
+      "cn_android-3": "[国服] 冰山行动",
+      "cn_android-4": "[国服] 彩虹计划",
+      "cn_android-5": "[国服] 发电机计划",
+      "cn_android-6": "[国服] 瞭望台行动",
+      "cn_android-7": "[国服] 十字路口行动",
+      "cn_android-8": "[国服] 朱诺行动",
+      "cn_android-9": "[国服] 杜立特空袭",
+      "cn_android-10": "[国服] 地狱犬行动",
+      "cn_android-11": "[国服] 开罗宣言",
+      "cn_android-12": "[国服] 奥林匹克行动",
+      "cn_android-13": "[国服] 小王冠行动",
+      "cn_android-14": "[国服] 波茨坦公告",
+      "cn_android-15": "[国服] 白色方案",
+      "cn_android-16": "[国服] 瓦尔基里行动",
+      "cn_android-17": "[国服] 曼哈顿计划",
+      "cn_android-18": "[国服] 八月风暴",
+      "cn_android-19": "[国服] 秋季旅行",
+      "cn_android-20": "[国服] 水星行动",
+      "cn_android-21": "[国服] 莱茵河卫兵",
+      "cn_android-22": "[国服] 北极光计划",
+      "cn_ios-0": "[国服] 夏威夷",
+      "cn_ios-1": "[国服] 珊瑚海",
+      "cn_ios-2": "[国服] 中途岛",
+      "cn_ios-3": "[国服] 铁底湾",
+      "cn_ios-4": "[国服] 所罗门",
+      "cn_ios-5": "[国服] 马里亚纳",
+      "cn_ios-6": "[国服] 莱特湾",
+      "cn_ios-7": "[国服] 硫磺岛",
+      "cn_ios-8": "[国服] 冲绳岛",
+      "cn_ios-9": "[国服] 阿留申群岛",
+      "cn_ios-10": "[国服] 马耳他",
+      "cn_channel-0": "[国服] 皇家巡游",
+      "cn_channel-1": "[国服] 大西洋宪章",
+      "cn_channel-2": "[国服] 十字军行动",
+      "cn_channel-3": "[国服] 龙骑兵行动",
+      "en-0": "[EN] Avrora",
+      "en-1": "[EN] Lexington",
+      "en-2": "[EN] Sandy",
+      "en-3": "[EN] Washington",
+      "en-4": "[EN] Amagi",
+      "jp-0": "[JP] ブレスト",
+      "jp-1": "[JP] 横須賀",
+      "jp-2": "[JP] 佐世保",
+      "jp-3": "[JP] 呉",
+      "jp-4": "[JP] 舞鶴",
+      "jp-5": "[JP] ルルイエ",
+      "jp-6": "[JP] サモア",
+      "jp-7": "[JP] 大湊",
+      "jp-8": "[JP] トラック",
+      "jp-9": "[JP] ラバウル",
+      "jp-10": "[JP] 鹿児島",
+      "jp-11": "[JP] マドラス",
+      "jp-12": "[JP] サンディエゴ",
+      "jp-13": "[JP] 竹敷",
+      "jp-14": "[JP] キール",
+      "jp-15": "[JP] 若松",
+      "jp-16": "[JP] オデッサ",
+      "jp-17": "[JP] スイートバン"
     },
     "ScreenshotMethod": {
       "name": "Emulator.ScreenshotMethod.name",
@@ -297,7 +389,8 @@
       "ADB_nc": "ADB_nc",
       "uiautomator2": "uiautomator2",
       "aScreenCap": "aScreenCap",
-      "aScreenCap_nc": "aScreenCap_nc"
+      "aScreenCap_nc": "aScreenCap_nc",
+      "DroidCast": "DroidCast"
     },
     "ControlMethod": {
       "name": "Emulator.ControlMethod.name",
@@ -310,6 +403,32 @@
     "ScreenshotDedithering": {
       "name": "Emulator.ScreenshotDedithering.name",
       "help": "Emulator.ScreenshotDedithering.help"
+    },
+    "AdbRestart": {
+      "name": "Emulator.AdbRestart.name",
+      "help": "Emulator.AdbRestart.help"
+    }
+  },
+  "RestartEmulator": {
+    "_info": {
+      "name": "RestartEmulator._info.name",
+      "help": "RestartEmulator._info.help"
+    },
+    "ErrorRestart": {
+      "name": "RestartEmulator.ErrorRestart.name",
+      "help": "RestartEmulator.ErrorRestart.help"
+    },
+    "DailyRestart": {
+      "name": "RestartEmulator.DailyRestart.name",
+      "help": "RestartEmulator.DailyRestart.help"
+    },
+    "EmulatorType": {
+      "name": "RestartEmulator.EmulatorType.name",
+      "help": "RestartEmulator.EmulatorType.help",
+      "auto": "auto",
+      "nox_player": "nox_player",
+      "bluestacks_5": "bluestacks_5",
+      "mumu_player": "mumu_player"
     }
   },
   "Error": {
@@ -324,6 +443,10 @@
     "SaveError": {
       "name": "Error.SaveError.name",
       "help": "Error.SaveError.help"
+    },
+    "OnePushConfig": {
+      "name": "Error.OnePushConfig.name",
+      "help": "Error.OnePushConfig.help"
     },
     "ScreenshotLength": {
       "name": "Error.ScreenshotLength.name",
@@ -368,33 +491,56 @@
       "name": "DropRecord.AzurStatsID.name",
       "help": "DropRecord.AzurStatsID.help"
     },
-    "SaveResearch": {
-      "name": "DropRecord.SaveResearch.name",
-      "help": "DropRecord.SaveResearch.help"
+    "API": {
+      "name": "DropRecord.API.name",
+      "help": "DropRecord.API.help",
+      "default": "default",
+      "cn_gz_reverse_proxy": "cn_gz_reverse_proxy",
+      "cn_sh_reverse_proxy": "cn_sh_reverse_proxy"
     },
-    "UploadResearch": {
-      "name": "DropRecord.UploadResearch.name",
-      "help": "DropRecord.UploadResearch.help"
+    "ResearchRecord": {
+      "name": "DropRecord.ResearchRecord.name",
+      "help": "DropRecord.ResearchRecord.help",
+      "do_not": "do_not",
+      "save": "save",
+      "upload": "upload",
+      "save_and_upload": "save_and_upload"
     },
-    "SaveCommission": {
-      "name": "DropRecord.SaveCommission.name",
-      "help": "DropRecord.SaveCommission.help"
+    "CommissionRecord": {
+      "name": "DropRecord.CommissionRecord.name",
+      "help": "DropRecord.CommissionRecord.help",
+      "do_not": "do_not",
+      "save": "save",
+      "upload": "upload",
+      "save_and_upload": "save_and_upload"
     },
-    "UploadCommission": {
-      "name": "DropRecord.UploadCommission.name",
-      "help": "DropRecord.UploadCommission.help"
+    "CombatRecord": {
+      "name": "DropRecord.CombatRecord.name",
+      "help": "DropRecord.CombatRecord.help",
+      "do_not": "do_not",
+      "save": "save"
     },
-    "SaveCombat": {
-      "name": "DropRecord.SaveCombat.name",
-      "help": "DropRecord.SaveCombat.help"
+    "OpsiRecord": {
+      "name": "DropRecord.OpsiRecord.name",
+      "help": "DropRecord.OpsiRecord.help",
+      "do_not": "do_not",
+      "save": "save",
+      "upload": "upload",
+      "save_and_upload": "save_and_upload"
     },
-    "SaveOpsi": {
-      "name": "DropRecord.SaveOpsi.name",
-      "help": "DropRecord.SaveOpsi.help"
+    "MeowfficerBuy": {
+      "name": "DropRecord.MeowfficerBuy.name",
+      "help": "DropRecord.MeowfficerBuy.help",
+      "do_not": "do_not",
+      "save": "save"
     },
-    "UploadOpsi": {
-      "name": "DropRecord.UploadOpsi.name",
-      "help": "DropRecord.UploadOpsi.help"
+    "MeowfficerTalent": {
+      "name": "DropRecord.MeowfficerTalent.name",
+      "help": "DropRecord.MeowfficerTalent.help",
+      "do_not": "do_not",
+      "save": "save",
+      "upload": "upload",
+      "save_and_upload": "save_and_upload"
     }
   },
   "Retirement": {
@@ -461,46 +607,56 @@
       "name": "Campaign.Event.name",
       "help": "Campaign.Event.help",
       "campaign_main": "campaign_main",
-      "event_20210422_cn": "讃える復興の迷路",
+      "event_20221124_cn": "錬金術士と謎の遺跡群島",
+      "event_20210325_cn": "開かれし紺碧の砂箱（復刻）",
+      "event_20201229_cn": "虚畳なりし限象（復刻）",
+      "event_20211111_cn": "燈火のシニエ",
+      "raid_20221027": "戦え！ロイヤルメイド隊3rd",
+      "event_20210121_cn": "悲歎せし焔海の詩（復刻）",
+      "event_20220915_cn": "赫の涙月 菫の暁風",
+      "event_20210916_cn": "駆けよ 碧海の吹き風",
+      "event_20200903_en": "輝ける峡湾の星（復刻）",
+      "event_20220818_cn": "結像点作戦",
       "event_20220324_cn": "幻像の塔",
+      "event_20211028_cn": "神穹を衝く聖歌（復刻）",
+      "event_20220728_cn": "鋼鷲の冒険譚",
+      "event_20200917_cn": "刹那觀る胡蝶の夢（復刻）",
+      "event_20201029_cn": "激唱のユニバース",
+      "raid_20220630": "アイリスの天使",
+      "raid_20210708": "交錯する新たな波 (復刻)",
+      "event_20200820_cn": "黒鉄の楽章 誓いの海（復刻）",
+      "event_20201012_cn": "奔る彩帆の青（復刻）",
+      "event_20210527_cn": "照らす螺旋の鏡海",
+      "event_20220526_cn": "诚閃の剣 搖光の城",
+      "raid_20200624": "特別演習超空強襲波（復刻）",
+      "event_20220428_cn": "吟ずる瑠璃の楽章",
+      "event_20220414_cn": "極夜照らす幻光（復刻）",
+      "event_20220407_tw": "蒼紅的迴響(復刻)",
+      "event_20210422_cn": "讃える復興の迷路",
       "event_20220310_tw": "復刻斯圖爾特的硝煙",
       "event_20200603_cn": "峡湾間の反撃（復刻）",
       "event_20220224_cn": "鳴動せし星霜の淵",
       "event_20210225_cn": "暁射す氷華の嵐",
       "event_20220210_cn": "凍絶の北海（復刻）",
       "raid_20220127": "秘密事件調査",
-      "event_20201229_cn": "虚畳なりし限象",
       "event_20211229_cn": "遡望せし虹彩の塔",
       "event_20211125_cn": "弧光は交わる世界にて",
-      "event_20211111_cn": "燈火のシニエ",
       "event_20211028_tw": "復刻光與影的鳶尾之華",
-      "event_20211028_cn": "神穹を衝く聖歌（復刻）",
-      "raid_20210708": "交錯する新たな波 (復刻)",
-      "event_20201012_cn": "奔る彩帆の青",
-      "event_20200917_cn": "刹那觀る胡蝶の夢",
-      "event_20210916_cn": "駆けよ 碧海の吹き風",
       "event_20210722_cn": "海に響くアイドルの歌",
       "event_20210819_cn": "闇靄払う銀翼（復刻）",
       "event_20200806_cn": "鉄血鮫とエニグマ（復刻）",
       "event_20200723_cn": "極夜照らす幻光",
-      "event_20200903_en": "輝ける峡湾の星（復刻）",
       "event_20210624_cn": "翳りし満ちる影の華(復刻)",
       "event_20210624_tw": "穹頂下的聖詠曲",
       "event_20210610_tw": "夜幕下的歸途",
-      "event_20210527_cn": "照らす螺旋の鏡海",
       "event_20210527_tw": "微層混合",
       "event_20210429_tw": "復刻墨染的鋼鐵之花",
       "event_20210415_tw": "復刻圍剿施佩伯爵",
-      "event_20210325_cn": "開かれし紺碧の砂箱（復刻）",
       "event_20210225_tw": "北境序曲",
-      "event_20210121_cn": "悲歎せし焔海の詩（復刻）",
       "event_20201126_cn": "バケーションレーン",
       "event_20200312_cn": "南洋に靡く硝煙（復刻）",
-      "event_20201029_cn": "激唱のユニバース",
       "event_20201002_en": "Counterattack Within the Fjord",
-      "event_20200820_cn": "黒鉄の楽章 誓いの海（復刻）",
       "event_20200716_en": "Ink Stained Steel Sakura Rerun",
-      "raid_20200624": "特別演習超空強襲波（復刻）",
       "event_20200611_en": "Skybound Oratorio",
       "event_20200603_en": "Prelude under the Moon Rerun",
       "event_20200521_en": "Iris of Light and Dark Rerun",
@@ -509,7 +665,15 @@
       "event_20200423_cn": "縹映る深緋の残響（復刻）",
       "event_20200326_cn": "闇靄払う銀翼",
       "event_20200227_cn": "凍絶の北海",
+      "war_archives_20210819_cn": "檔案 闇靄払う銀翼",
+      "war_archives_20200903_cn": "檔案 輝ける峡湾の星",
+      "war_archives_20201029_cn": "檔案 激唱のユニバース",
+      "war_archives_20200806_cn": "檔案 鉄血鮫とエニグマ",
+      "war_archives_20210624_cn": "檔案 翳りし満ちる影の華",
+      "war_archives_20210325_cn": "檔案 開かれし紺碧の砂箱",
       "war_archives_20190911_cn": "檔案 悲歎せし焔海の詩",
+      "war_archives_20211014_cn": "檔案 激奏のポラリス",
+      "war_archives_20200820_cn": "檔案 黒鉄の楽章 誓いの海",
       "war_archives_20181227_cn": "檔案 縹映る深緋の残響",
       "war_archives_20180726_cn": "檔案 光と影のアイリス",
       "war_archives_20180607_cn": "檔案 墨染まりし鋼の桜",
@@ -662,14 +826,6 @@
       "fleet1_boss_fleet2_mob": "fleet1_boss_fleet2_mob",
       "fleet1_all_fleet2_standby": "fleet1_all_fleet2_standby",
       "fleet1_standby_fleet2_all": "fleet1_standby_fleet2_all"
-    },
-    "AutoSearchFleetOrder": {
-      "name": "Fleet.AutoSearchFleetOrder.name",
-      "help": "Fleet.AutoSearchFleetOrder.help",
-      "fleet1_mob_fleet2_boss": "fleet1_mob_fleet2_boss",
-      "fleet1_boss_fleet2_mob": "fleet1_boss_fleet2_mob",
-      "fleet1_all_fleet2_standby": "fleet1_all_fleet2_standby",
-      "fleet1_standby_fleet2_all": "fleet1_standby_fleet2_all"
     }
   },
   "Submarine": {
@@ -690,6 +846,7 @@
       "do_not_use": "do_not_use",
       "hunt_only": "hunt_only",
       "boss_only": "boss_only",
+      "hunt_and_boss": "hunt_and_boss",
       "every_combat": "every_combat"
     },
     "AutoSearchMode": {
@@ -704,7 +861,7 @@
       "to_boss_position": "to_boss_position",
       "1_grid_to_boss": "1_grid_to_boss",
       "2_grid_to_boss": "2_grid_to_boss",
-      "use_U522_skill": "use_U522_skill"
+      "use_open_ocean_support": "use_open_ocean_support"
     }
   },
   "Emotion": {
@@ -921,6 +1078,10 @@
       "bogue": "bogue",
       "ranger": "ranger",
       "hermes": "hermes"
+    },
+    "CommissionLimit": {
+      "name": "GemsFarming.CommissionLimit.name",
+      "help": "GemsFarming.CommissionLimit.help"
     }
   },
   "EventGeneral": {
@@ -937,32 +1098,39 @@
       "help": "EventGeneral.TimeLimit.help"
     }
   },
-  "EventAb": {
+  "TaskBalancer": {
     "_info": {
-      "name": "EventAb._info.name",
-      "help": "EventAb._info.help"
+      "name": "TaskBalancer._info.name",
+      "help": "TaskBalancer._info.help"
     },
-    "StageFilter": {
-      "name": "EventAb.StageFilter.name",
-      "help": "EventAb.StageFilter.help"
+    "Enable": {
+      "name": "TaskBalancer.Enable.name",
+      "help": "TaskBalancer.Enable.help"
     },
-    "LastStage": {
-      "name": "EventAb.LastStage.name",
-      "help": "EventAb.LastStage.help"
+    "CoinLimit": {
+      "name": "TaskBalancer.CoinLimit.name",
+      "help": "TaskBalancer.CoinLimit.help"
+    },
+    "TaskCall": {
+      "name": "TaskBalancer.TaskCall.name",
+      "help": "TaskBalancer.TaskCall.help",
+      "Main": "Main",
+      "Main2": "Main2",
+      "Main3": "Main3"
     }
   },
-  "EventCd": {
+  "EventDaily": {
     "_info": {
-      "name": "EventCd._info.name",
-      "help": "EventCd._info.help"
+      "name": "EventDaily._info.name",
+      "help": "EventDaily._info.help"
     },
     "StageFilter": {
-      "name": "EventCd.StageFilter.name",
-      "help": "EventCd.StageFilter.help"
+      "name": "EventDaily.StageFilter.name",
+      "help": "EventDaily.StageFilter.help"
     },
     "LastStage": {
-      "name": "EventCd.LastStage.name",
-      "help": "EventCd.LastStage.help"
+      "name": "EventDaily.LastStage.name",
+      "help": "EventDaily.LastStage.help"
     }
   },
   "Raid": {
@@ -1011,9 +1179,19 @@
       "name": "Commission.DoMajorCommission.name",
       "help": "Commission.DoMajorCommission.help"
     },
-    "CommissionFilter": {
-      "name": "Commission.CommissionFilter.name",
-      "help": "Commission.CommissionFilter.help"
+    "PresetFilter": {
+      "name": "Commission.PresetFilter.name",
+      "help": "Commission.PresetFilter.help",
+      "chip": "chip",
+      "chip_24h": "chip_24h",
+      "cube": "cube",
+      "cube_24h": "cube_24h",
+      "oil": "oil",
+      "custom": "custom"
+    },
+    "CustomFilter": {
+      "name": "Commission.CustomFilter.name",
+      "help": "Commission.CustomFilter.help"
     }
   },
   "Tactical": {
@@ -1024,6 +1202,15 @@
     "TacticalFilter": {
       "name": "Tactical.TacticalFilter.name",
       "help": "Tactical.TacticalFilter.help"
+    },
+    "RapidTrainingSlot": {
+      "name": "Tactical.RapidTrainingSlot.name",
+      "help": "Tactical.RapidTrainingSlot.help",
+      "do_not_use": "do_not_use",
+      "slot_1": "slot_1",
+      "slot_2": "slot_2",
+      "slot_3": "slot_3",
+      "slot_4": "slot_4"
     }
   },
   "ControlExpOverflow": {
@@ -1052,6 +1239,20 @@
       "help": "ControlExpOverflow.T1Allow.help"
     }
   },
+  "AddNewStudent": {
+    "_info": {
+      "name": "新しいスキルを学ぶ",
+      "help": "戦術学院に空席があると自動的に艦娘が配属され、初の下級スキルが習得される"
+    },
+    "Enable": {
+      "name": "この機能を有効にする",
+      "help": ""
+    },
+    "Favorite": {
+      "name": "好ましい選択",
+      "help": ""
+    }
+  },
   "Research": {
     "_info": {
       "name": "Research._info.name",
@@ -1062,6 +1263,7 @@
       "help": "Research.UseCube.help",
       "always_use": "always_use",
       "only_05_hour": "only_05_hour",
+      "only_no_project": "only_no_project",
       "do_not_use": "do_not_use"
     },
     "UseCoin": {
@@ -1069,6 +1271,7 @@
       "help": "Research.UseCoin.help",
       "always_use": "always_use",
       "only_05_hour": "only_05_hour",
+      "only_no_project": "only_no_project",
       "do_not_use": "do_not_use"
     },
     "UsePart": {
@@ -1076,17 +1279,30 @@
       "help": "Research.UsePart.help",
       "always_use": "always_use",
       "only_05_hour": "only_05_hour",
+      "only_no_project": "only_no_project",
       "do_not_use": "do_not_use"
+    },
+    "AllowDelay": {
+      "name": "Research.AllowDelay.name",
+      "help": "Research.AllowDelay.help"
     },
     "PresetFilter": {
       "name": "Research.PresetFilter.name",
       "help": "Research.PresetFilter.help",
       "custom": "custom",
-      "series_4_blueprint_tenrai": "series_4_blueprint_tenrai",
-      "series_4_blueprint_only": "series_4_blueprint_only",
-      "series_4_tenrai_only": "series_4_tenrai_only",
-      "series_3": "series_3",
-      "series_3_than_2": "series_3_than_2"
+      "series_5_blueprint_152": "series_5_blueprint_152",
+      "series_5_blueprint_only": "series_5_blueprint_only",
+      "series_5_152_only": "series_5_152_only",
+      "series_4_blueprint_tenrai": "Series 4 Blueprints+Tenrai",
+      "series_4_blueprint_only": "Series 4 Blueprints Only",
+      "series_4_tenrai_only": "Series 4 Tenrai Only",
+      "series_3_blueprint_234": "Series 3 Blueprints+234",
+      "series_3_blueprint_only": "Series 3 Blueprints Only",
+      "series_3_234_only": "Series 3 234 Only",
+      "series_2_than_3_457_234": "Series 2+3 457+234",
+      "series_2_blueprint_457": "Series 2 Blueprints+457",
+      "series_2_blueprint_only": "Series 2 Blueprints Only",
+      "series_2_457_only": "Series 2 457 Only"
     },
     "CustomFilter": {
       "name": "Research.CustomFilter.name",
@@ -1362,7 +1578,7 @@
       "champagne": "champagne"
     }
   },
-  "MedalShop": {
+  "MedalShop2": {
     "_info": {
       "name": "MedalShop._info.name",
       "help": "MedalShop._info.help"
@@ -1370,6 +1586,57 @@
     "Filter": {
       "name": "MedalShop.Filter.name",
       "help": "MedalShop.Filter.help"
+    },
+    "RETROFIT_T1": {
+      "name": "MedalShop.RETROFIT_T1.name",
+      "help": "MedalShop.RETROFIT_T1.help",
+      "dd": "dd",
+      "cl": "cl",
+      "bb": "bb",
+      "cv": "cv"
+    },
+    "RETROFIT_T2": {
+      "name": "MedalShop.RETROFIT_T2.name",
+      "help": "MedalShop.RETROFIT_T2.help",
+      "dd": "dd",
+      "cl": "cl",
+      "bb": "bb",
+      "cv": "cv"
+    },
+    "RETROFIT_T3": {
+      "name": "MedalShop.RETROFIT_T3.name",
+      "help": "MedalShop.RETROFIT_T3.help",
+      "dd": "dd",
+      "cl": "cl",
+      "bb": "bb",
+      "cv": "cv"
+    },
+    "PLATE_T1": {
+      "name": "MedalShop.PLATE_T1.name",
+      "help": "MedalShop.PLATE_T1.help",
+      "general": "general",
+      "gun": "gun",
+      "torpedo": "torpedo",
+      "antiair": "antiair",
+      "plane": "plane"
+    },
+    "PLATE_T2": {
+      "name": "MedalShop.PLATE_T2.name",
+      "help": "MedalShop.PLATE_T2.help",
+      "general": "general",
+      "gun": "gun",
+      "torpedo": "torpedo",
+      "antiair": "antiair",
+      "plane": "plane"
+    },
+    "PLATE_T3": {
+      "name": "MedalShop.PLATE_T3.name",
+      "help": "MedalShop.PLATE_T3.help",
+      "general": "general",
+      "gun": "gun",
+      "torpedo": "torpedo",
+      "antiair": "antiair",
+      "plane": "plane"
     }
   },
   "MeritShop": {
@@ -1442,19 +1709,13 @@
       "9": "9",
       "10": "10"
     },
+    "UseTicket": {
+      "name": "Gacha.UseTicket.name",
+      "help": "Gacha.UseTicket.help"
+    },
     "UseDrill": {
       "name": "Gacha.UseDrill.name",
       "help": "Gacha.UseDrill.help"
-    }
-  },
-  "SupplyPack": {
-    "_info": {
-      "name": "SupplyPack._info.name",
-      "help": "SupplyPack._info.help"
-    },
-    "WeeklyFreeSupplyPack": {
-      "name": "SupplyPack.WeeklyFreeSupplyPack.name",
-      "help": "SupplyPack.WeeklyFreeSupplyPack.help"
     }
   },
   "BattlePass": {
@@ -1462,19 +1723,51 @@
       "name": "BattlePass._info.name",
       "help": "BattlePass._info.help"
     },
-    "BattlePassReward": {
-      "name": "BattlePass.BattlePassReward.name",
-      "help": "BattlePass.BattlePassReward.help"
+    "Collect": {
+      "name": "BattlePass.Collect.name",
+      "help": "BattlePass.Collect.help"
     }
   },
-  "MetaReward": {
+  "DataKey": {
     "_info": {
-      "name": "MetaReward._info.name",
-      "help": "MetaReward._info.help"
+      "name": "DataKey._info.name",
+      "help": "DataKey._info.help"
     },
-    "MetaReward": {
-      "name": "MetaReward.MetaReward.name",
-      "help": "MetaReward.MetaReward.help"
+    "Collect": {
+      "name": "DataKey.Collect.name",
+      "help": "DataKey.Collect.help"
+    },
+    "ForceCollect": {
+      "name": "DataKey.ForceCollect.name",
+      "help": "DataKey.ForceCollect.help"
+    }
+  },
+  "Mail": {
+    "_info": {
+      "name": "Mail._info.name",
+      "help": "Mail._info.help"
+    },
+    "Collect": {
+      "name": "Mail.Collect.name",
+      "help": "Mail.Collect.help"
+    },
+    "Filter": {
+      "name": "Mail.Filter.name",
+      "help": "Mail.Filter.help"
+    },
+    "Delete": {
+      "name": "Mail.Delete.name",
+      "help": "Mail.Delete.help"
+    }
+  },
+  "SupplyPack": {
+    "_info": {
+      "name": "SupplyPack._info.name",
+      "help": "SupplyPack._info.help"
+    },
+    "Collect": {
+      "name": "SupplyPack.Collect.name",
+      "help": "SupplyPack.Collect.help"
     }
   },
   "Daily": {
@@ -1565,6 +1858,23 @@
       "first": "first",
       "second": "second",
       "third": "third"
+    },
+    "ModuleDevelopment": {
+      "name": "Daily.ModuleDevelopment.name",
+      "help": "Daily.ModuleDevelopment.help",
+      "skip": "skip",
+      "first": "first",
+      "second": "second"
+    },
+    "ModuleDevelopmentFleet": {
+      "name": "Daily.ModuleDevelopmentFleet.name",
+      "help": "Daily.ModuleDevelopmentFleet.help",
+      "1": "1",
+      "2": "2",
+      "3": "3",
+      "4": "4",
+      "5": "5",
+      "6": "6"
     }
   },
   "Hard": {
@@ -1658,9 +1968,15 @@
       "name": "OpsiGeneral.UseLogger.name",
       "help": "OpsiGeneral.UseLogger.help"
     },
-    "BuyActionPoint": {
-      "name": "OpsiGeneral.BuyActionPoint.name",
-      "help": "OpsiGeneral.BuyActionPoint.help"
+    "BuyActionPointLimit": {
+      "name": "Buy AP X time(s)",
+      "help": "Maximum number of buying AP.",
+      "0": "Don't buy",
+      "1": "1 (1000oil, 100AP)",
+      "2": "2 (2000oil, 200AP)",
+      "3": "3 (4000oil, 400AP)",
+      "4": "4 (6000oil, 600AP)",
+      "5": "5 (10000oil, 1000AP)"
     },
     "OilLimit": {
       "name": "OpsiGeneral.OilLimit.name",
@@ -1670,9 +1986,9 @@
       "name": "OpsiGeneral.RepairThreshold.name",
       "help": "OpsiGeneral.RepairThreshold.help"
     },
-    "BuyAkashiShop": {
-      "name": "OpsiGeneral.BuyAkashiShop.name",
-      "help": "OpsiGeneral.BuyAkashiShop.help"
+    "DoRandomMapEvent": {
+      "name": "OpsiGeneral.DoRandomMapEvent.name",
+      "help": "OpsiGeneral.DoRandomMapEvent.help"
     },
     "AkashiShopFilter": {
       "name": "OpsiGeneral.AkashiShopFilter.name",
@@ -1688,13 +2004,27 @@
       "name": "OpsiAshBeacon.AshAttack.name",
       "help": "OpsiAshBeacon.AshAttack.help"
     },
-    "EnsureFullyCollected": {
-      "name": "OpsiAshBeacon.EnsureFullyCollected.name",
-      "help": "OpsiAshBeacon.EnsureFullyCollected.help"
+    "OneHitMode": {
+      "name": "OpsiAshBeacon.OneHitMode.name",
+      "help": "OpsiAshBeacon.OneHitMode.help"
     },
     "RequestAssist": {
       "name": "OpsiAshBeacon.RequestAssist.name",
       "help": "OpsiAshBeacon.RequestAssist.help"
+    },
+    "EnsureFullyCollected": {
+      "name": "OpsiAshBeacon.EnsureFullyCollected.name",
+      "help": "OpsiAshBeacon.EnsureFullyCollected.help"
+    }
+  },
+  "OpsiDossierBeacon": {
+    "_info": {
+      "name": "OpsiDossierBeacon._info.name",
+      "help": "OpsiDossierBeacon._info.help"
+    },
+    "Enable": {
+      "name": "OpsiDossierBeacon.Enable.name",
+      "help": "OpsiDossierBeacon.Enable.help"
     }
   },
   "OpsiFleetFilter": {
@@ -1751,6 +2081,16 @@
     "BuySupply": {
       "name": "OpsiShop.BuySupply.name",
       "help": "OpsiShop.BuySupply.help"
+    }
+  },
+  "OpsiVoucher": {
+    "_info": {
+      "name": "OpsiVoucher._info.name",
+      "help": "OpsiVoucher._info.help"
+    },
+    "Filter": {
+      "name": "OpsiVoucher.Filter.name",
+      "help": "OpsiVoucher.Filter.help"
     }
   },
   "OpsiDaily": {
@@ -1820,6 +2160,19 @@
       "help": "OpsiMeowfficerFarming.TargetZone.help"
     }
   },
+  "OpsiHazard1Leveling": {
+    "_info": {
+      "name": "OpsiHazard1Leveling._info.name",
+      "help": "OpsiHazard1Leveling._info.help"
+    },
+    "TargetZone": {
+      "name": "OpsiHazard1Leveling.TargetZone.name",
+      "help": "OpsiHazard1Leveling.TargetZone.help",
+      "0": "0",
+      "44": "44",
+      "22": "22"
+    }
+  },
   "Daemon": {
     "_info": {
       "name": "Daemon._info.name",
@@ -1838,6 +2191,10 @@
     "RepairShip": {
       "name": "OpsiDaemon.RepairShip.name",
       "help": "OpsiDaemon.RepairShip.help"
+    },
+    "SelectEnemy": {
+      "name": "OpsiDaemon.SelectEnemy.name",
+      "help": "OpsiDaemon.SelectEnemy.help"
     }
   },
   "Benchmark": {
@@ -1902,6 +2259,16 @@
       "help": "GameManager.AutoRestart.help"
     }
   },
+  "Storage": {
+    "_info": {
+      "name": "Storage._info.name",
+      "help": "Storage._info.help"
+    },
+    "Storage": {
+      "name": "Storage.Storage.name",
+      "help": "Storage.Storage.help"
+    }
+  },
   "Gui": {
     "Aside": {
       "Install": "Gui.Aside.Install",
@@ -1941,7 +2308,9 @@
     "MenuDevelop": {
       "HomePage": "Gui.MenuDevelop.HomePage",
       "Translate": "Gui.MenuDevelop.Translate",
-      "Update": "Gui.MenuDevelop.Update"
+      "Update": "Gui.MenuDevelop.Update",
+      "Remote": "Gui.MenuDevelop.Remote",
+      "Utils": "Gui.MenuDevelop.Utils"
     },
     "Overview": {
       "Scheduler": "Gui.Overview.Scheduler",
@@ -1956,16 +2325,17 @@
       "NewName": "Gui.AddAlas.NewName",
       "CopyFrom": "Gui.AddAlas.CopyFrom",
       "Confirm": "Gui.AddAlas.Confirm",
-      "FileExist": "Gui.AddAlas.FileExist"
+      "FileExist": "Gui.AddAlas.FileExist",
+      "InvalidChar": "設定ファイル名には次の文字は使えません：.\\/:*?\"<>|"
     },
     "Update": {
       "UpToDate": "Gui.Update.UpToDate",
       "HaveUpdate": "Gui.Update.HaveUpdate",
-      "UpdateFailed": "Gui.Update.UpdateFailed",
       "UpdateStart": "Gui.Update.UpdateStart",
       "UpdateWait": "Gui.Update.UpdateWait",
       "UpdateRun": "Gui.Update.UpdateRun",
       "UpdateSuccess": "Gui.Update.UpdateSuccess",
+      "UpdateFailed": "Gui.Update.UpdateFailed",
       "UpdateChecking": "Gui.Update.UpdateChecking",
       "UpdateCancel": "Gui.Update.UpdateCancel",
       "UpdateFinish": "Gui.Update.UpdateFinish",
@@ -1974,10 +2344,20 @@
       "Author": "Gui.Update.Author",
       "Time": "Gui.Update.Time",
       "Message": "Gui.Update.Message",
-      "DisabledWarn": "Gui.Update.DisabledWarn"
+      "DisabledWarn": "Gui.Update.DisabledWarn",
+      "DetailedHistory": "Gui.Update.DetailedHistory"
+    },
+    "Remote": {
+      "Running": "Gui.Remote.Running",
+      "NotRunning": "Gui.Remote.NotRunning",
+      "NotEnable": "Gui.Remote.NotEnable",
+      "EntryPoint": "Gui.Remote.EntryPoint",
+      "ConfigureHint": "Gui.Remote.ConfigureHint",
+      "SSHNotInstall": "Gui.Remote.SSHNotInstall"
     },
     "Text": {
-      "InvalidFeedBack": "Gui.Text.InvalidFeedBack"
+      "InvalidFeedBack": "Gui.Text.InvalidFeedBack",
+      "Clear": "Gui.Text.Clear"
     }
   }
 }

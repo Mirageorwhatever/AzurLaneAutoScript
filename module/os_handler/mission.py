@@ -1,8 +1,6 @@
-from datetime import datetime
-
 from module.base.timer import Timer
 from module.base.utils import *
-from module.config.utils import deep_get, get_os_next_reset
+from module.config.utils import get_os_next_reset, DEFAULT_TIME
 from module.logger import logger
 from module.map_detection.utils import fit_points
 from module.os.globe_detection import GLOBE_MAP_SHAPE
@@ -38,6 +36,9 @@ class MissionHandler(GlobeOperation, ZoneManager):
         zone = self.camera_to_zone(tuple(point))
         return zone
 
+    def is_in_os_mission(self):
+        return self.appear(MISSION_CHECK, offset=(20, 20))
+
     def os_mission_enter(self, skip_first_screenshot=True):
         """
         Enter mission list and claim mission reward.
@@ -71,7 +72,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 continue
 
             # End
-            if self.appear(MISSION_CHECK, offset=(20, 20)) \
+            if self.is_in_os_mission() \
                     and not self.appear(MISSION_FINISH, offset=(20, 20)) \
                     and not (self.appear(MISSION_CHECKOUT, offset=(20, 20))
                              and MISSION_CHECKOUT.match_appear_on(self.device.image)):
@@ -79,7 +80,7 @@ class MissionHandler(GlobeOperation, ZoneManager):
                 if confirm_timer.reached():
                     logger.info('No OS mission found.')
                     break
-            elif self.appear(MISSION_CHECK, offset=(20, 20)) \
+            elif self.is_in_os_mission() \
                     and (self.appear(MISSION_CHECKOUT, offset=(20, 20))
                          and MISSION_CHECKOUT.match_appear_on(self.device.image)):
                 # Found one mission.
@@ -210,8 +211,8 @@ class MissionHandler(GlobeOperation, ZoneManager):
         Returns:
             bool: If task OpsiExplore is under scheduling.
         """
-        enable = deep_get(self.config.data, keys='OpsiExplore.Scheduler.Enable', default=False)
-        next_run = deep_get(self.config.data, keys='OpsiExplore.Scheduler.NextRun', default=datetime(2020, 1, 1, 0, 0))
+        enable = self.config.cross_get(keys='OpsiExplore.Scheduler.Enable', default=False)
+        next_run = self.config.cross_get(keys='OpsiExplore.Scheduler.NextRun', default=DEFAULT_TIME)
         next_reset = get_os_next_reset()
         logger.attr('OpsiNextReset', next_reset)
         logger.attr('OpsiExplore', (enable, next_run))

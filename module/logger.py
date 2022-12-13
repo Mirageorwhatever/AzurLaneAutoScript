@@ -4,9 +4,8 @@ import os
 import sys
 from typing import Callable, List
 
-import rich.box
 from rich.console import Console, ConsoleOptions, ConsoleRenderable, NewLine
-from rich.highlighter import RegexHighlighter
+from rich.highlighter import RegexHighlighter, NullHighlighter
 from rich.logging import RichHandler
 from rich.rule import Rule
 from rich.style import Style
@@ -23,8 +22,6 @@ def empty_function(*args, **kwargs):
 logging.basicConfig = empty_function
 logging.raiseExceptions = True  # Set True if wanna see encode errors on console
 
-# Force rounded box
-rich.box.ASCII = rich.box.ASCII2 = rich.box.ROUNDED
 # Remove HTTP keywords (GET, POST etc.)
 RichHandler.KEYWORDS = []
 
@@ -115,7 +112,7 @@ class Highlighter(RegexHighlighter):
         #  r'[2]{1}[0-3]{1})(?::)?([0-5]{1}\d{1})(?::)?([0-5]{1}\d{1}).\d+\b)'),
         (r'(?P<time>([0-1]{1}\d{1}|[2]{1}[0-3]{1})(?::)?'
          r'([0-5]{1}\d{1})(?::)?([0-5]{1}\d{1})(.\d+\b))'),
-        r"(?P<brace>[\{\[\(\)\]\}])"
+        r"(?P<brace>[\{\[\(\)\]\}])",
         r"\b(?P<bool_true>True)\b|\b(?P<bool_false>False)\b|\b(?P<none>None)\b",
         r"(?P<path>(([A-Za-z]\:)|.)?\B([\/\\][\w\.\-\_\+]+)*[\/\\])(?P<filename>[\w\.\-\_\+]*)?",
         # r"(?<![\\\w])(?P<str>b?\'\'\'.*?(?<!\\)\'\'\'|b?\'.*?(?<!\\)\'|b?\"\"\".*?(?<!\\)\"\"\"|b?\".*?(?<!\\)\")",
@@ -201,6 +198,7 @@ def set_file_logger(name=pyw_name):
     file_console = Console(
         file=file,
         no_color=True,
+        highlight=False,
         width=119,
     )
 
@@ -212,6 +210,7 @@ def set_file_logger(name=pyw_name):
         rich_tracebacks=True,
         tracebacks_show_locals=True,
         tracebacks_extra_lines=3,
+        highlighter=NullHighlighter(),
     )
     hdlr.setFormatter(file_formatter)
 
@@ -349,6 +348,7 @@ logger.hr = hr
 logger.attr = attr
 logger.attr_align = attr_align
 logger.set_file_logger = set_file_logger
+logger.set_func_logger = set_func_logger
 logger.rule = rule
 logger.print = print
 logger.log_file: str

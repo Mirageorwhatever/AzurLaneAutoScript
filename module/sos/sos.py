@@ -1,12 +1,10 @@
 from campaign.campaign_sos.campaign_base import CampaignBase
-from module.base.decorator import Config
-from module.base.decorator import cached_property
+from module.base.decorator import Config, cached_property
 from module.base.utils import area_pad, random_rectangle_vector
 from module.campaign.run import CampaignRun
 from module.logger import logger
 from module.ocr.ocr import Digit
 from module.sos.assets import *
-from module.template.assets import *
 from module.ui.assets import CAMPAIGN_CHECK
 from module.ui.page import page_campaign
 from module.ui.scroll import Scroll
@@ -40,7 +38,7 @@ class CampaignSos(CampaignRun, CampaignBase):
     @Config.when(SERVER='tw')
     def _sos_scroll(self):
         return Scroll(SOS_SCROLL_AREA, color=(247, 210, 66), name='SOS_SCROLL')
-    
+
     @cached_property
     @Config.when(SERVER=None)
     def _sos_scroll(self):
@@ -58,7 +56,8 @@ class CampaignSos(CampaignRun, CampaignBase):
         """
         signal_search_buttons = TEMPLATE_SIGNAL_SEARCH.match_multi(self.device.image)
         sos_goto_buttons = TEMPLATE_SIGNAL_GOTO.match_multi(self.device.image)
-        all_buttons = sos_goto_buttons + signal_search_buttons
+        sos_confirm_buttons = TEMPLATE_SIGNAL_CONFIRM.match_multi(self.device.image)
+        all_buttons = sos_goto_buttons + signal_search_buttons + sos_confirm_buttons
         if not len(all_buttons):
             logger.info('No SOS chapter found')
             return None
@@ -79,6 +78,7 @@ class CampaignSos(CampaignRun, CampaignBase):
     def _sos_signal_select(self, chapter):
         """
         select a SOS signal
+        EN has no scroll bar, so the swipe signal list.
 
         Args:
             chapter (int): 3 to 10.
@@ -140,7 +140,7 @@ class CampaignSos(CampaignRun, CampaignBase):
 
         for scroll_position in positions:
             if self._sos_scroll.appear(main=self):
-                self._sos_scroll.set(scroll_position, main=self)
+                self._sos_scroll.set(scroll_position, main=self, distance_check=False)
             else:
                 logger.info('SOS signal scroll not appear, skip setting scroll position')
             target_button = self._find_target_chapter(chapter)
@@ -172,6 +172,8 @@ class CampaignSos(CampaignRun, CampaignBase):
                 if TEMPLATE_SIGNAL_SEARCH.match(image):
                     self.device.click(entrance)
                 if TEMPLATE_SIGNAL_GOTO.match(image):
+                    self.device.click(entrance)
+                if TEMPLATE_SIGNAL_CONFIRM.match(image):
                     self.device.click(entrance)
 
             # End

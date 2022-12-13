@@ -1,21 +1,7 @@
 import re
 
-import gc
-
-from module.base.decorator import cached_property
-from module.logger import logger
-
-
-def del_cached_property(obj, name):
-    """
-    Delete a cached property safely.
-
-    Args:
-        obj:
-        name (str):
-    """
-    if name in obj.__dict__:
-        del obj.__dict__[name]
+import module.config.server as server
+from module.base.decorator import cached_property, del_cached_property
 
 
 def get_assets_from_file(file, regex):
@@ -53,13 +39,17 @@ _preserved_assets = PreservedAssets()
 
 
 class Resource:
+    # Class property, record all button and templates
     instances = {}
+    # Instance property, record cached properties of instance
+    cached = []
 
     def resource_add(self, key):
         Resource.instances[key] = self
 
     def resource_release(self):
-        pass
+        for cache in self.cached:
+            del_cached_property(self, cache)
 
     @classmethod
     def is_loaded(cls, obj):
@@ -71,28 +61,49 @@ class Resource:
 
     @classmethod
     def resource_show(cls):
+        from module.logger import logger
         logger.hr('Show resource')
         for key, obj in cls.instances.items():
             if cls.is_loaded(obj):
                 continue
             logger.info(f'{obj}: {key}')
 
+    @staticmethod
+    def parse_property(data, s=None):
+        """
+        Parse properties of Button or Template object input.
+        Such as `area`, `color` and `button`.
+
+        Args:
+            data: Dict or str
+            s (str): Load from given a server or load from global attribute `server.server`
+        """
+        if s is None:
+            s = server.server
+        if isinstance(data, dict):
+            return data[s]
+        else:
+            return data
+
 
 def release_resources(next_task=''):
     # Release all OCR models
     # Usually to have 2 models loaded and each model takes about 20MB
     # This will release 20-40MB
-    from module.ocr.ocr import OCR_MODEL
-    if 'Opsi' in next_task or 'commission' in next_task:
-        # OCR models will be used soon, don't release
-        models = []
-    elif next_task:
-        # Release OCR models except 'azur_lane'
-        models = ['cnocr', 'jp', 'tw']
-    else:
-        models = ['azur_lane', 'cnocr', 'jp', 'tw']
-    for model in models:
-        del_cached_property(OCR_MODEL, model)
+    from module.webui.setting import State
+    if not State.deploy_config.UseOcrServer:
+        # Release only when using per-instance OCR
+        from module.ocr.ocr import OCR_MODEL
+        if 'Opsi' in next_task or 'commission' in next_task:
+            # OCR models will be used soon, don't release
+            models = []
+        elif next_task:
+            # Release OCR models except 'azur_lane'
+            models = ['cnocr', 'jp', 'tw']
+        else:
+            models = ['azur_lane', 'cnocr', 'jp', 'tw']
+        for model in models:
+            del_cached_property(OCR_MODEL, model)
 
     # Release assets cache
     # module.ui has about 80 assets and takes about 3MB
@@ -122,4 +133,4 @@ def release_resources(next_task=''):
         del_cached_property(ASSETS, attr)
 
     # Useless in most cases, but just call it
-    gc.collect()
+    # gc.collect()

@@ -4,23 +4,28 @@ import module.config.server as server
 
 
 class ManualConfig:
-    SERVER = server.server
+    @property
+    def SERVER(self):
+        return server.server
 
     SCHEDULER_PRIORITY = """
     Restart
-    > Research > Commission > Tactical
+    > OpsiCrossMonth
+    > Commission > Tactical > Research
     > Exercise
-    > Dorm > Meowfficer > Guild > Gacha > SupplyPack
-    > Reward > BattlePass
-    > ShopFrequent > ShopOnce > Shipyard > DataKey
+    > Dorm > Meowfficer > Guild > Gacha
+    > Reward
+    > ShopFrequent > ShopOnce > Shipyard > Freebies
     > OpsiExplore
-    > OpsiDaily > OpsiShop
-    > OpsiAbyssal > OpsiStronghold > OpsiObscure
-    > Daily > Hard > OpsiAshAssist
-    > Sos > EventSp > EventAb > EventCd > RaidDaily > WarArchives > MaritimeEscort
-    > OpsiMeowfficerFarming > MetaReward
-    > Event > Raid > Main
-    > C124LargeLeveling > C122MediumLeveling > C72MysteryFarming > GemsFarming
+    > OpsiAshBeacon
+    > OpsiDaily > OpsiShop > OpsiVoucher
+    > OpsiAbyssal > OpsiStronghold > OpsiObscure > OpsiArchive
+    > Daily > Hard > OpsiAshBeacon > OpsiAshAssist
+    > Sos > EventSp > EventA > EventB > EventC > EventD > RaidDaily > WarArchives > MaritimeEscort
+    > Event > Event2 > Raid > Main > Main2 > Main3
+    > OpsiMeowfficerFarming
+    > GemsFarming
+    > OpsiHazard1Leveling
     """
 
     """
@@ -49,6 +54,10 @@ class ManualConfig:
     # half: Left half of '%' in Vacation Lane (DOA collaboration, event_20201126_cn)
     #       DOA has smaller stage icon, right half of '%' is out of the original area.
     STAGE_ENTRANCE = ['normal']  # normal, blue, half
+    # Set stage='TH' and run_count=100, to run TH1~TH5 in cycle
+    STAGE_LOOP_ALIAS = {
+        ('event_20221124_cn', 'TH'): 'TH1 > TH2 > TH3 > TH4 > TH5'
+    }
 
     """
     module.combat.level
@@ -60,10 +69,13 @@ class ManualConfig:
     """
     module.device
     """
+    DEVICE_OVER_HTTP = False
     FORWARD_PORT_RANGE = (20000, 21000)
     REVERSE_SERVER_PORT = 7903
     ASCREENCAP_FILEPATH_LOCAL = './bin/ascreencap'
     ASCREENCAP_FILEPATH_REMOTE = '/data/local/tmp/ascreencap'
+    DROIDCAST_FILEPATH_LOCAL = './bin/DroidCast/DroidCast-debug-1.1.0.apk'
+    DROIDCAST_FILEPATH_REMOTE = '/data/local/tmp/DroidCast.apk'
     MINITOUCH_FILEPATH_REMOTE = '/data/local/tmp/minitouch'
     HERMIT_FILEPATH_LOCAL = './bin/hermit/hermit.apk'
 
@@ -71,6 +83,11 @@ class ManualConfig:
     module.campaign.gems_farming
     """
     GEMS_EMOTION_TRIGGRED = False
+
+    """
+    module.handler
+    """
+    STORY_OPTION = 0
 
     """
     module.map.fleet
@@ -91,13 +108,16 @@ class ManualConfig:
     MAP_HAS_FORTRESS = False  # event_2021917_cn, clear fortress to remove roadblock to boss.
     MAP_HAS_MISSILE_ATTACK = False  # event_202111229_cn, missile attack covers the feature area of sirens.
     MAP_HAS_BOUNCING_ENEMY = False  # event_20220224_cn, enemy is bouncing in a fixed route.
+    MAP_HAS_DECOY_ENEMY = False  # event_20220428, decoy enemy on map, disappear when fleet reach there.
     MAP_FOCUS_ENEMY_AFTER_BATTLE = False  # Operation siren
     MAP_ENEMY_TEMPLATE = ['Light', 'Main', 'Carrier', 'Treasure']
     MAP_SIREN_TEMPLATE = ['DD', 'CL', 'CA', 'BB', 'CV']
     MAP_ENEMY_GENRE_DETECTION_SCALING = {}  # Key: str, Template name, Value: float, scaling factor
+    MAP_ENEMY_GENRE_SIMILARITY = 0.85
     MAP_SIREN_MOVE_WAIT = 1.5  # The enemy moving takes about 1.2 ~ 1.5s.
     MAP_SIREN_COUNT = 0
     MAP_HAS_MYSTERY = True
+    MAP_MYSTERY_MAP_CLICK = True
     MAP_MYSTERY_HAS_CARRIER = False
     MAP_GRID_CENTER_TOLERANCE = 0.1
 

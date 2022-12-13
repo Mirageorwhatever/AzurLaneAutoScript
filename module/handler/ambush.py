@@ -1,7 +1,5 @@
-import numpy as np
-
 from module.base.timer import Timer
-from module.base.utils import red_overlay_transparency, get_color
+from module.base.utils import get_color, red_overlay_transparency
 from module.combat.combat import Combat
 from module.handler.assets import *
 from module.handler.info_handler import info_letter_preprocess
@@ -31,11 +29,20 @@ class AmbushHandler(Combat):
                self.MAP_AIR_RAID_OVERLAY_TRANSPARENCY_THRESHOLD
 
     def _handle_air_raid(self):
+        """
+        Wait until air raid disappeared
+        """
         logger.info('Map air raid')
-        disappear = Timer(self.MAP_AIR_RAID_CONFIRM_SECOND)
-        disappear.start()
+        disappear = Timer(self.MAP_AIR_RAID_CONFIRM_SECOND).start()
+        timeout = Timer(2.5, count=2).start()
+
         while 1:
             self.device.screenshot()
+            # Timeout
+            if timeout.reached():
+                logger.warning('_handle_air_raid timeout, assume air raid disappeared')
+                break
+            # Disappeared
             if self._air_raid_appear():
                 disappear.reset()
             else:
@@ -55,7 +62,7 @@ class AmbushHandler(Combat):
             logger.attr('Ambush_evade', 'failed')
             self.combat(expected_end='no_searching', fleet_index=self.fleet_show_index)
         else:
-            logger.warning('Unrecognised info when ambush evade.')
+            logger.warning('Unrecognized info when ambush evade.')
             self.ensure_no_info_bar()
             if self.combat_appear():
                 self.combat(fleet_index=self.fleet_show_index)

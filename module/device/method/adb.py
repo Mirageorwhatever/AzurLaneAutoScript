@@ -6,9 +6,11 @@ import numpy as np
 from adbutils.errors import AdbError
 from lxml import etree
 
+from module.base.decorator import Config
 from module.device.connection import Connection
-from module.device.method.utils import recv_all, possible_reasons, handle_adb_error, RETRY_TRIES, RETRY_DELAY
-from module.exception import ScriptError, RequestHumanTakeover
+from module.device.method.utils import (RETRY_DELAY, RETRY_TRIES, remove_prefix,
+                                        handle_adb_error, PackageNotInstalled)
+from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 
@@ -34,16 +36,20 @@ def retry(func):
                 logger.error(e)
 
                 def init():
-                    self.adb_disconnect(self.serial)
-                    self.adb_connect(self.serial)
+                    self.adb_reconnect()
             # AdbError
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
-                        self.adb_disconnect(self.serial)
-                        self.adb_connect(self.serial)
+                        self.adb_reconnect()
                 else:
                     break
+            # Package not installed
+            except PackageNotInstalled as e:
+                logger.error(e)
+
+                def init():
+                    self.detect_package()
             # Unknown, probably a trucked image
             except Exception as e:
                 logger.exception(e)
@@ -55,6 +61,26 @@ def retry(func):
         raise RequestHumanTakeover
 
     return retry_wrapper
+
+
+def load_screencap(data):
+    """
+    Args:
+        data: Raw data from `screencap`
+
+    Returns:
+        np.ndarray:
+    """
+    # Load data
+    header = np.frombuffer(data[0:12], dtype=np.uint32)
+    channel = 4  # screencap sends an RGBA image
+    width, height, _ = header  # Usually to be 1280, 720, 1
+
+    image = np.frombuffer(data, dtype=np.uint8)
+    shape = image.shape[0]
+    image = image[shape - width * height * channel:].reshape(height, width, channel)
+    image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
+    return image
 
 
 class Adb(Connection):
@@ -75,10 +101,9 @@ class Adb(Connection):
         # fix compatibility issues for adb screencap decode problem when the data is from vmos pro
         # When use adb screencap for a screenshot from vmos pro, there would be a header more than that from emulator
         # which would cause image decode problem. So i check and remove the header there.
-        if screenshot.startswith(b'long long=8 fun*=10\n'):
-            screenshot = screenshot.replace(b'long long=8 fun*=10\n', b'', 1)
+        screenshot = remove_prefix(screenshot, b'long long=8 fun*=10\n')
 
-        image = np.fromstring(screenshot, np.uint8)
+        image = np.frombuffer(screenshot, np.uint8)
         image = cv2.imdecode(image, cv2.IMREAD_COLOR)
         if image is None:
             raise OSError('Empty image')
@@ -95,35 +120,35 @@ class Adb(Connection):
                 continue
 
         self.__screenshot_method_fixed = self.__screenshot_method
-        if len(screenshot) < 100:
+        if len(screenshot) < 500:
             logger.warning(f'Unexpected screenshot: {screenshot}')
         raise OSError(f'cannot load screenshot')
 
     @retry
+    @Config.when(DEVICE_OVER_HTTP=False)
     def screenshot_adb(self):
-        stream = self.adb_shell(['screencap', '-p'], stream=True)
+        data = self.adb_shell(['screencap', '-p'], stream=True)
+        if len(data) < 500:
+            logger.warning(f'Unexpected screenshot: {data}')
 
-        content = recv_all(stream)
+        return self.__process_screenshot(data)
 
-        return self.__process_screenshot(content)
+    @retry
+    @Config.when(DEVICE_OVER_HTTP=True)
+    def screenshot_adb(self):
+        data = self.adb_shell(['screencap'], stream=True)
+        if len(data) < 500:
+            logger.warning(f'Unexpected screenshot: {data}')
+
+        return load_screencap(data)
 
     @retry
     def screenshot_adb_nc(self):
         data = self.adb_shell_nc(['screencap'])
-        if len(data) < 100:
+        if len(data) < 500:
             logger.warning(f'Unexpected screenshot: {data}')
 
-        # Load data
-        header = np.frombuffer(data[0:12], dtype=np.uint32)
-        channel = 4  # screencap sends an RGBA image
-        width, height, _ = header  # Usually to be 1280, 720, 1
-
-        image = np.frombuffer(data, dtype=np.uint8)
-        shape = image.shape[0]
-        image = image[shape - width * height * channel:].reshape(height, width, channel)
-        image = cv2.cvtColor(image, cv2.COLOR_BGRA2BGR)
-
-        return image
+        return load_screencap(data)
 
     @retry
     def click_adb(self, x, y):
@@ -177,7 +202,7 @@ class Adb(Connection):
         raise OSError("Couldn't get focused app")
 
     @retry
-    def app_start_adb(self, package_name, allow_failure=False):
+    def app_start_adb(self, package_name=None, allow_failure=False):
         """
         Args:
             package_name (str):
@@ -186,6 +211,8 @@ class Adb(Connection):
         Returns:
             bool: If success to start
         """
+        if not package_name:
+            package_name = self.package
         result = self.adb_shell([
             'monkey', '-p', package_name, '-c',
             'android.intent.category.LAUNCHER', '1'
@@ -196,16 +223,17 @@ class Adb(Connection):
                 return False
             else:
                 logger.error(result)
-                possible_reasons(f'"{package_name}" not found, please check setting Emulator.PackageName')
-                raise RequestHumanTakeover
+                raise PackageNotInstalled(package_name)
         else:
             # Events injected: 1
             # ## Network stats: elapsed time=4ms (0ms mobile, 0ms wifi, 4ms not connected)
             return True
 
     @retry
-    def app_stop_adb(self, package_name):
+    def app_stop_adb(self, package_name=None):
         """ Stop one application: am force-stop"""
+        if not package_name:
+            package_name = self.package
         self.adb_shell(['am', 'force-stop', package_name])
 
     @retry

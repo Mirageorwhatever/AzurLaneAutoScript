@@ -1,12 +1,14 @@
 import os
+from functools import wraps
 
 import lz4.block
 from adbutils.errors import AdbError
 
 from module.base.utils import *
 from module.device.connection import Connection
-from module.device.method.utils import recv_all, handle_adb_error, RETRY_TRIES, RETRY_DELAY
-from module.exception import ScriptError, RequestHumanTakeover
+from module.device.method.utils import (RETRY_DELAY, RETRY_TRIES,
+                                        handle_adb_error)
+from module.exception import RequestHumanTakeover, ScriptError
 from module.logger import logger
 
 
@@ -15,6 +17,7 @@ class AscreencapError(Exception):
 
 
 def retry(func):
+    @wraps(func)
     def retry_wrapper(self, *args, **kwargs):
         """
         Args:
@@ -35,8 +38,7 @@ def retry(func):
                 logger.error(e)
 
                 def init():
-                    self.adb_disconnect(self.serial)
-                    self.adb_connect(self.serial)
+                    self.adb_reconnect()
             # When ascreencap is not installed
             except AscreencapError as e:
                 logger.error(e)
@@ -47,8 +49,7 @@ def retry(func):
             except AdbError as e:
                 if handle_adb_error(e):
                     def init():
-                        self.adb_disconnect(self.serial)
-                        self.adb_connect(self.serial)
+                        self.adb_reconnect()
                 else:
                     break
             # Unknown, probably a trucked image
@@ -77,8 +78,16 @@ class AScreenCap(Connection):
         sdk = self.adb_shell(['getprop', 'ro.build.version.sdk'])
         logger.info(f'cpu_arc: {arc}, sdk_ver: {sdk}')
 
-        filepath = os.path.join(self.config.ASCREENCAP_FILEPATH_LOCAL, arc, 'ascreencap')
-        if int(sdk) not in range(21, 26) or not os.path.exists(filepath):
+        if int(sdk) in range(21, 26):
+            ver = "Android_5.x-7.x"
+        elif int(sdk) in range(26, 28):
+            ver = "Android_8.x"
+        elif int(sdk) == 28:
+            ver = "Android_9.x"
+        else:
+            ver = "0"
+        filepath = os.path.join(self.config.ASCREENCAP_FILEPATH_LOCAL, ver, arc, 'ascreencap')
+        if not os.path.exists(filepath):
             logger.critical('No suitable version of aScreenCap lib available for this device')
             logger.critical('Please use ADB or uiautomator2 for screenshots instead')
             raise RequestHumanTakeover
@@ -103,6 +112,8 @@ class AScreenCap(Connection):
             if self.__bytepointer >= len(byte_array):
                 text = 'Repositioning byte pointer failed, corrupted aScreenCap data received'
                 logger.warning(text)
+                if len(byte_array) < 500:
+                    logger.warning(f'Unexpected screenshot: {byte_array}')
                 raise AscreencapError(text)
         return byte_array[self.__bytepointer:]
 
@@ -155,20 +166,20 @@ class AScreenCap(Connection):
                 continue
 
         self.__screenshot_method_fixed = self.__screenshot_method
-        if len(screenshot) < 100:
+        if len(screenshot) < 500:
             logger.warning(f'Unexpected screenshot: {screenshot}')
         raise OSError(f'cannot load screenshot')
 
     @retry
     def screenshot_ascreencap(self):
-        stream = self.adb_shell([self.config.ASCREENCAP_FILEPATH_REMOTE, '--pack', '2', '--stdout'], stream=True)
-
-        content = recv_all(stream)
+        content = self.adb_shell([self.config.ASCREENCAP_FILEPATH_REMOTE, '--pack', '2', '--stdout'], stream=True)
 
         return self.__process_screenshot(content)
 
     @retry
     def screenshot_ascreencap_nc(self):
         data = self.adb_shell_nc([self.config.ASCREENCAP_FILEPATH_REMOTE, '--pack', '2', '--stdout'])
+        if len(data) < 500:
+            logger.warning(f'Unexpected screenshot: {data}')
 
         return self.__uncompress(data)
